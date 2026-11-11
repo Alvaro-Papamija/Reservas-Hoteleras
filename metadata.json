@@ -1,0 +1,6 @@
+{
+  "name": "Alborada Hotel Boutique - Sistema de Reservas",
+  "description": "Sistema integral de reservas y gestión hotelera para Alborada Hotel Boutique, con catálogo de habitaciones, verificación de disponibilidad en tiempo real, gestión de reservas y panel administrativo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
