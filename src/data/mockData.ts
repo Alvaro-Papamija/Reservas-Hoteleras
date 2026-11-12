@@ -1,4 +1,4 @@
-import { TipoHabitacion, Habitacion, Cliente, Usuario, Reserva } from '../types/hotel';
+import { TipoHabitacion, Habitacion, Cliente, Usuario, Reserva, Cupon, Resena } from '../types/hotel';
 
 export const INITIAL_TIPOS: TipoHabitacion[] = [
   {
@@ -540,5 +540,82 @@ export const INITIAL_RESERVAS: Reserva[] = [
     estado: 'CANCELADA',
     fecha_creacion: '2026-10-18T14:22:00Z',
     notas: 'Cancelada por el cliente con más de 72 horas de anticipación.',
+  },
+];
+
+export const INITIAL_CUPONES: Cupon[] = [
+  {
+    codigo: 'ALBORADA10',
+    tipo: 'PORCENTAJE',
+    valor: 10,
+    descripcion: '10% de descuento de cortesía en tu estancia',
+    activo: true,
+  },
+  {
+    codigo: 'BIENVENIDA20',
+    tipo: 'PORCENTAJE',
+    valor: 20,
+    descripcion: '20% de descuento especial de bienvenida',
+    activo: true,
+    minimo_noches: 2,
+  },
+  {
+    codigo: 'ESCAPADA50K',
+    tipo: 'MONTO_FIJO',
+    valor: 50000,
+    descripcion: '$50.000 COP de descuento directo por reserva',
+    activo: true,
+  },
+  {
+    codigo: 'VIP30',
+    tipo: 'PORCENTAJE',
+    valor: 30,
+    descripcion: '30% de descuento para huéspedes frecuentes VIP',
+    activo: true,
+    minimo_noches: 3,
+  },
+];
+
+export const INITIAL_RESENAS: Resena[] = [
+  {
+    id_resena: 1,
+    id_habitacion: 101,
+    id_reserva: 3,
+    cliente_nombre: 'Santiago Morales',
+    calificacion: 5,
+    comentario: 'Una estancia verdaderamente excepcional. El jardín de orquídeas frente a la habitación crea una paz increíble. El desayuno colonial delicioso.',
+    fecha: '2026-10-25',
+  },
+  {
+    id_resena: 2,
+    id_habitacion: 103,
+    cliente_nombre: 'Laura Gómez',
+    calificacion: 5,
+    comentario: 'La habitación doble con salida a la piscina superó todas nuestras expectativas. La cama es sumamente cómoda y la atención impecable.',
+    fecha: '2026-11-02',
+  },
+  {
+    id_resena: 3,
+    id_habitacion: 309,
+    cliente_nombre: 'Mariana Valencia',
+    calificacion: 5,
+    comentario: 'La Suite es simplemente un sueño. La terraza privada con vista al atardecer y el jacuzzi artesanal hacen que no quieras salir del hotel.',
+    fecha: '2026-11-10',
+  },
+  {
+    id_resena: 4,
+    id_habitacion: 104,
+    cliente_nombre: 'Andrés Felipe Castro',
+    calificacion: 4,
+    comentario: 'Excelente ambiente colonial y muy limpio. El internet funcionó perfecto para mis reuniones de trabajo remoto.',
+    fecha: '2026-10-28',
+  },
+  {
+    id_resena: 5,
+    id_habitacion: 204,
+    cliente_nombre: 'Camila Echeverri',
+    calificacion: 5,
+    comentario: 'Hermosa decoración tradicional con todas las comodidades modernas. Dormimos delicioso y el personal fue muy cálido.',
+    fecha: '2026-11-05',
   },
 ];

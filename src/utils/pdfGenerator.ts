@@ -165,7 +165,22 @@ export const generarComprobantePDF = (reserva: Reserva): void => {
   doc.text(`${reserva.cantidad_noches} noche(s)`, 110, currentY + 5.5);
   doc.text(formatCOP(reserva.precio_noche), 135, currentY + 5.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(formatCOP(reserva.total), pageWidth - 18, currentY + 5.5, { align: 'right' });
+  const subtotalVal = reserva.subtotal || (reserva.precio_noche * reserva.cantidad_noches);
+  doc.text(formatCOP(subtotalVal), pageWidth - 18, currentY + 5.5, { align: 'right' });
+
+  // Optional Coupon discount row
+  if (reserva.descuento && reserva.descuento > 0) {
+    currentY += 8;
+    doc.setFillColor(240, 253, 244); // Light emerald
+    doc.rect(14, currentY, pageWidth - 28, 8, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(22, 101, 52); // Emerald 800
+    doc.text(`Descuento Cupón Promocional (${reserva.cupon_aplicado || 'DESCUENTO'})`, 18, currentY + 5.5);
+    doc.text('1', 110, currentY + 5.5);
+    doc.text(`-${formatCOP(reserva.descuento)}`, 135, currentY + 5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`-${formatCOP(reserva.descuento)}`, pageWidth - 18, currentY + 5.5, { align: 'right' });
+  }
 
   // Total summary box
   currentY += 12;

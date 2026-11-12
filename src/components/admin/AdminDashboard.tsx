@@ -66,6 +66,13 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setActiveView('admin-calendario')}
+            className="px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-xs font-semibold text-stone-800 shadow-xs transition-colors flex items-center gap-1.5"
+          >
+            <CalendarCheck className="w-3.5 h-3.5 text-amber-700" />
+            <span>Calendario Visual</span>
+          </button>
+          <button
             onClick={() => setActiveView('admin-habitaciones')}
             className="px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-xs font-semibold text-stone-800 shadow-xs transition-colors"
           >

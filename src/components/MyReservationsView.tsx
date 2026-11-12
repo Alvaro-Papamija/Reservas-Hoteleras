@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Download,
   Mail,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,13 +26,17 @@ interface MyReservationsViewProps {
 }
 
 export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExploreRooms }) => {
-  const { reservas, currentUser, cancelarReserva } = useHotel();
+  const { reservas, currentUser, cancelarReserva, calificarReserva } = useHotel();
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA'>('TODAS');
   const [selectedReservaForCancel, setSelectedReservaForCancel] = useState<Reserva | null>(null);
   const [selectedReservaForEmail, setSelectedReservaForEmail] = useState<Reserva | null>(null);
+  const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
+  const [ratingSuccessMsg, setRatingSuccessMsg] = useState<string | null>(null);
 
   // Filter client's reservations
   const clientReservations = reservas.filter(
@@ -54,6 +59,22 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
       setTimeout(() => setCancelSuccessMsg(null), 5000);
     } else {
       setCancelError(result.error || 'No se pudo cancelar la reserva.');
+    }
+  };
+
+  const handleOpenRating = (reserva: Reserva) => {
+    setSelectedReservaForRating(reserva);
+    setRatingStars(reserva.calificacion || 5);
+    setRatingComment(reserva.comentario_calificacion || '');
+  };
+
+  const handleSaveRating = () => {
+    if (!selectedReservaForRating) return;
+    const res = calificarReserva(selectedReservaForRating.id_reserva, ratingStars, ratingComment);
+    if (res.success) {
+      setRatingSuccessMsg(`Gracias por tu opinión sobre la Habitación ${selectedReservaForRating.habitacion_numero}.`);
+      setSelectedReservaForRating(null);
+      setTimeout(() => setRatingSuccessMsg(null), 5000);
     }
   };
 
@@ -106,6 +127,13 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
         <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{cancelSuccessMsg}</span>
+        </div>
+      )}
+
+      {ratingSuccessMsg && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>{ratingSuccessMsg}</span>
         </div>
       )}
 
@@ -250,6 +278,22 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                       <Mail className="w-3.5 h-3.5 text-amber-700" />
                       <span>Ver Correo</span>
                     </button>
+
+                    {/* Calificar estancia */}
+                    {reserva.calificacion ? (
+                      <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                        <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                        <span>Calificada: {reserva.calificacion}/5</span>
+                      </div>
+                    ) : reserva.estado === 'FINALIZADA' ? (
+                      <button
+                        onClick={() => handleOpenRating(reserva)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold transition-colors shadow-xs"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                        <span>Calificar Estancia</span>
+                      </button>
+                    ) : null}
                   </div>
 
                   {/* Cancel button with 48h policy enforcement */}
@@ -286,6 +330,95 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
           reserva={selectedReservaForEmail}
           onClose={() => setSelectedReservaForEmail(null)}
         />
+      )}
+
+      {/* Calificar Estancia Modal */}
+      {selectedReservaForRating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                <h3 className="text-base font-bold text-stone-900">
+                  Calificar tu Estancia
+                </h3>
+              </div>
+              <span className="text-xs font-mono-numbers text-stone-500">
+                {selectedReservaForRating.codigo}
+              </span>
+            </div>
+
+            <p className="text-xs text-stone-600 mb-4">
+              ¿Cómo fue tu experiencia en la <strong>Habitación {selectedReservaForRating.habitacion_numero} ({selectedReservaForRating.habitacion_tipo})</strong>? Tu opinión ayuda a otros huéspedes.
+            </p>
+
+            {/* Interactive Stars */}
+            <div className="mb-4 text-center">
+              <label className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block mb-2">
+                Tu Puntuación
+              </label>
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((starVal) => (
+                  <button
+                    key={starVal}
+                    type="button"
+                    onClick={() => setRatingStars(starVal)}
+                    className="p-1 text-2xl transition-transform hover:scale-110 focus:outline-none"
+                    aria-label={`${starVal} estrellas`}
+                  >
+                    <Star
+                      className={`w-8 h-8 ${
+                        starVal <= ratingStars
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-stone-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-amber-900 block mt-1.5">
+                {ratingStars === 5
+                  ? 'Excelente - Superó expectativas'
+                  : ratingStars === 4
+                  ? 'Muy buena - Gran experiencia'
+                  : ratingStars === 3
+                  ? 'Aceptable - Experiencia estándar'
+                  : ratingStars === 2
+                  ? 'Regular - Varios aspectos por mejorar'
+                  : 'Mala - No cumplió lo prometido'}
+              </span>
+            </div>
+
+            {/* Comment */}
+            <div className="mb-5">
+              <label className="text-[11px] font-semibold text-stone-600 block mb-1.5">
+                Comentario u Observaciones
+              </label>
+              <textarea
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+                rows={3}
+                placeholder="Cuéntanos sobre la comodidad, atención del personal, limpieza o amenidades..."
+                className="w-full px-3 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                onClick={() => setSelectedReservaForRating(null)}
+                className="px-4 py-2 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 text-xs font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveRating}
+                className="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold shadow-xs transition-colors"
+              >
+                Guardar Calificación
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Cancellation Confirmation Modal */}

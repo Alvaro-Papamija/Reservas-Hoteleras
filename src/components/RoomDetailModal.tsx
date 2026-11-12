@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Images,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -75,7 +76,7 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
   onClose,
   onProceedToBook,
 }) => {
-  const { tipos, checkOverlap, calculateNights } = useHotel();
+  const { tipos, checkOverlap, calculateNights, getRatingHabitacion, getResenasHabitacion } = useHotel();
 
   const [fechaEntrada, setFechaEntrada] = useState('2026-12-15');
   const [fechaSalida, setFechaSalida] = useState('2026-12-18');
@@ -102,6 +103,8 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
 
   const nights = calculateNights(fechaEntrada, fechaSalida);
   const hasOverlap = checkOverlap(habitacion.id_habitacion, fechaEntrada, fechaSalida);
+  const ratingData = getRatingHabitacion(habitacion.id_habitacion);
+  const resenasHab = getResenasHabitacion(habitacion.id_habitacion);
 
   return (
     <AnimatePresence>
@@ -247,6 +250,63 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Ratings and Reviews Section */}
+            <div className="pt-2 border-t border-stone-100">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                    Opiniones y Calificaciones
+                  </h4>
+                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                    <span className="text-xs font-bold text-amber-900 font-mono-numbers">
+                      {ratingData.promedio > 0 ? ratingData.promedio.toFixed(1) : 'Nuevo'}
+                    </span>
+                    <span className="text-[11px] text-amber-700 font-mono-numbers">
+                      ({ratingData.total} {ratingData.total === 1 ? 'opinión' : 'opiniones'})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {resenasHab.length === 0 ? (
+                <div className="p-4 bg-stone-50 rounded-xl text-stone-500 text-xs text-center border border-stone-200/60">
+                  Esta habitación aún no cuenta con reseñas de huéspedes. Sé el primero en compartir tu experiencia tras tu estancia.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {resenasHab.slice(0, 3).map((r) => (
+                    <div
+                      key={r.id_resena}
+                      className="p-3.5 bg-stone-50 rounded-xl border border-stone-200/70 text-xs space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-stone-900">{r.cliente_nombre}</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((starVal) => (
+                            <Star
+                              key={starVal}
+                              className={`w-3 h-3 ${
+                                starVal <= r.calificacion
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-stone-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-[10px] text-stone-400 ml-1.5 font-mono-numbers">
+                            {r.fecha}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-stone-600 leading-relaxed italic">
+                        "{r.comentario}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Interactive Availability Verification Box */}

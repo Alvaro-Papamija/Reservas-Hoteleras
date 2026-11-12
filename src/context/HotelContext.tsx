@@ -9,6 +9,8 @@ import {
   EstadoReserva,
   EstadoHabitacion,
   DisponibilidadQuery,
+  Cupon,
+  Resena,
 } from '../types/hotel';
 import {
   INITIAL_HABITACIONES,
@@ -16,6 +18,8 @@ import {
   INITIAL_CLIENTES,
   INITIAL_USUARIOS,
   INITIAL_RESERVAS,
+  INITIAL_CUPONES,
+  INITIAL_RESENAS,
 } from '../data/mockData';
 
 interface BookingValidationResult {
@@ -30,10 +34,12 @@ interface HotelContextType {
   tipos: TipoHabitacion[];
   clientes: Cliente[];
   reservas: Reserva[];
+  cupones: Cupon[];
+  resenas: Resena[];
   currentRole: RolUsuario;
   currentUser: Usuario;
   currentCliente: Cliente | null;
-  activeView: 'inicio' | 'habitaciones' | 'disponibilidad' | 'mis-reservas' | 'admin-dashboard' | 'admin-habitaciones' | 'admin-reservas' | 'admin-clientes' | 'admin-reportes';
+  activeView: 'inicio' | 'habitaciones' | 'disponibilidad' | 'mis-reservas' | 'admin-dashboard' | 'admin-habitaciones' | 'admin-reservas' | 'admin-clientes' | 'admin-reportes' | 'admin-calendario';
   
   // Actions
   setActiveView: (view: any) => void;
@@ -46,6 +52,10 @@ interface HotelContextType {
   calculateNights: (fechaEntrada: string, fechaSalida: string) => number;
   calculateTotal: (precioNoche: number, fechaEntrada: string, fechaSalida: string) => { noches: number; total: number };
   searchDisponibilidad: (query: DisponibilidadQuery) => Habitacion[];
+  validarCupon: (codigo: string, subtotal: number, noches: number) => { valido: boolean; descuento: number; cupon?: Cupon; mensaje?: string };
+  calificarReserva: (idReserva: number, calificacion: number, comentario: string) => { success: boolean; error?: string };
+  getResenasHabitacion: (idHabitacion: number) => Resena[];
+  getRatingHabitacion: (idHabitacion: number) => { promedio: number; total: number };
   
   // Reservations CRUD & State Machine
   createReserva: (data: {
@@ -54,6 +64,7 @@ interface HotelContextType {
     fecha_salida: string;
     cantidad_huespedes: number;
     notas?: string;
+    cupon_codigo?: string;
     cliente_override?: Partial<Cliente>;
   }) => { success: boolean; reserva?: Reserva; error?: string };
   
@@ -97,6 +108,16 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_RESERVAS;
   });
 
+  const [cupones, setCupones] = useState<Cupon[]>(() => {
+    const saved = localStorage.getItem('alborada_cupones');
+    return saved ? JSON.parse(saved) : INITIAL_CUPONES;
+  });
+
+  const [resenas, setResenas] = useState<Resena[]>(() => {
+    const saved = localStorage.getItem('alborada_resenas');
+    return saved ? JSON.parse(saved) : INITIAL_RESENAS;
+  });
+
   const [currentRole, setCurrentRole] = useState<RolUsuario>('CLIENTE');
   const [currentUser, setCurrentUser] = useState<Usuario>(INITIAL_USUARIOS[1]); // Default Laura Gómez (Cliente)
   const [activeView, setActiveView] = useState<any>('inicio');
@@ -117,6 +138,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('alborada_reservas', JSON.stringify(reservas));
   }, [reservas]);
+
+  useEffect(() => {
+    localStorage.setItem('alborada_cupones', JSON.stringify(cupones));
+  }, [cupones]);
+
+  useEffect(() => {
+    localStorage.setItem('alborada_resenas', JSON.stringify(resenas));
+  }, [resenas]);
 
   // Current client helper
   const currentCliente = clientes.find((c) => c.correo === currentUser.correo) || null;
@@ -224,6 +253,76 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  // Coupons System
+  const validarCupon = (codigo: string, subtotal: number, noches: number) => {
+    if (!codigo || !codigo.trim()) {
+      return { valido: false, descuento: 0, mensaje: 'Ingresa un código de cupón' };
+    }
+    const cleanCode = codigo.trim().toUpperCase();
+    const cup = cupones.find((c) => c.codigo.toUpperCase() === cleanCode && c.activo);
+    if (!cup) {
+      return { valido: false, descuento: 0, mensaje: 'Cupón no válido o inactivo' };
+    }
+    if (cup.minimo_noches && noches < cup.minimo_noches) {
+      return {
+        valido: false,
+        descuento: 0,
+        mensaje: `Este cupón requiere una estancia mínima de ${cup.minimo_noches} noches`,
+      };
+    }
+    let descuento = 0;
+    if (cup.tipo === 'PORCENTAJE') {
+      descuento = Math.round((subtotal * cup.valor) / 100);
+    } else {
+      descuento = Math.min(cup.valor, subtotal);
+    }
+    return {
+      valido: true,
+      descuento,
+      cupon: cup,
+      mensaje: `¡Cupón ${cup.codigo} aplicado! ${cup.descripcion}`,
+    };
+  };
+
+  // Reviews and Ratings System
+  const calificarReserva = (idReserva: number, calificacion: number, comentario: string) => {
+    const target = reservas.find((r) => r.id_reserva === idReserva);
+    if (!target) return { success: false, error: 'Reserva no encontrada.' };
+
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? { ...r, calificacion, comentario_calificacion: comentario }
+          : r
+      )
+    );
+
+    const nuevaResena: Resena = {
+      id_resena: Date.now(),
+      id_habitacion: target.id_habitacion,
+      id_reserva: target.id_reserva,
+      cliente_nombre: target.cliente_nombre,
+      calificacion,
+      comentario,
+      fecha: new Date().toISOString().split('T')[0],
+    };
+    setResenas((prev) => [nuevaResena, ...prev]);
+
+    return { success: true };
+  };
+
+  const getResenasHabitacion = (idHabitacion: number): Resena[] => {
+    return resenas.filter((r) => r.id_habitacion === idHabitacion);
+  };
+
+  const getRatingHabitacion = (idHabitacion: number): { promedio: number; total: number } => {
+    const habResenas = resenas.filter((r) => r.id_habitacion === idHabitacion);
+    if (habResenas.length === 0) return { promedio: 4.9, total: 1 };
+    const sum = habResenas.reduce((acc, curr) => acc + curr.calificacion, 0);
+    const promedio = Number((sum / habResenas.length).toFixed(1));
+    return { promedio, total: habResenas.length };
+  };
+
   // HU05 & RN02: Create Reservation
   const createReserva = (data: {
     id_habitacion: number;
@@ -231,9 +330,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fecha_salida: string;
     cantidad_huespedes: number;
     notas?: string;
+    cupon_codigo?: string;
     cliente_override?: Partial<Cliente>;
   }): { success: boolean; reserva?: Reserva; error?: string } => {
-    const { id_habitacion, fecha_entrada, fecha_salida, cantidad_huespedes, notas, cliente_override } = data;
+    const { id_habitacion, fecha_entrada, fecha_salida, cantidad_huespedes, notas, cupon_codigo, cliente_override } = data;
 
     // Validation 1: Dates
     const start = new Date(fecha_entrada);
@@ -284,10 +384,22 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     // Pricing calculation (RN02 & RN03)
-    const { noches, total } = calculateTotal(tipo.precio_base, fecha_entrada, fecha_salida);
+    const { noches, total: subtotal } = calculateTotal(tipo.precio_base, fecha_entrada, fecha_salida);
     if (noches <= 0) {
       return { success: false, error: 'La estancia mínima es de 1 noche.' };
     }
+
+    // Coupon discount calculation
+    let descuento = 0;
+    let cupon_aplicado: string | undefined = undefined;
+    if (cupon_codigo) {
+      const resCupon = validarCupon(cupon_codigo, subtotal, noches);
+      if (resCupon.valido) {
+        descuento = resCupon.descuento;
+        cupon_aplicado = resCupon.cupon?.codigo;
+      }
+    }
+    const totalFinal = Math.max(0, subtotal - descuento);
 
     // Generate unique readable code: RH-YYYYMMDD-XXXX
     const dateStr = fecha_entrada.replace(/-/g, '');
@@ -332,7 +444,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       cantidad_huespedes,
       precio_noche: tipo.precio_base,
       cantidad_noches: noches,
-      total,
+      subtotal,
+      descuento,
+      cupon_aplicado,
+      total: totalFinal,
       estado: 'PENDIENTE',
       fecha_creacion: new Date().toISOString(),
       notas: notas || '',
@@ -495,6 +610,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         tipos,
         clientes,
         reservas,
+        cupones,
+        resenas,
         currentRole,
         currentUser,
         currentCliente,
@@ -507,6 +624,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         calculateNights,
         calculateTotal,
         searchDisponibilidad,
+        validarCupon,
+        calificarReserva,
+        getResenasHabitacion,
+        getRatingHabitacion,
         createReserva,
         cancelarReserva,
         cambiarEstadoReserva,

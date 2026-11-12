@@ -23,6 +23,8 @@ export interface Habitacion {
   galeria?: string[];
   servicios: string[];
   activa: boolean;
+  calificacion_promedio?: number;
+  total_resenas?: number;
 }
 
 export interface Usuario {
@@ -62,9 +64,33 @@ export interface Reserva {
   precio_noche: number;
   cantidad_noches: number;
   total: number;
+  subtotal?: number;
+  cupon_aplicado?: string;
+  descuento?: number;
+  calificacion?: number;
+  comentario_calificacion?: string;
   estado: EstadoReserva;
   fecha_creacion: string;
   notas?: string;
+}
+
+export interface Cupon {
+  codigo: string;
+  tipo: 'PORCENTAJE' | 'MONTO_FIJO';
+  valor: number;
+  descripcion: string;
+  activo: boolean;
+  minimo_noches?: number;
+}
+
+export interface Resena {
+  id_resena: number;
+  id_habitacion: number;
+  id_reserva?: number;
+  cliente_nombre: string;
+  calificacion: number; // 1-5
+  comentario: string;
+  fecha: string;
 }
 
 export interface DisponibilidadQuery {

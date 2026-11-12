@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { formatCOP } from '../../utils/formatters';
 import {
@@ -10,10 +10,14 @@ import {
   Calendar,
   Layers,
   BedDouble,
+  Tag,
+  Star,
+  Award,
+  Percent,
 } from 'lucide-react';
 
 export const AdminReportsView: React.FC = () => {
-  const { habitaciones, tipos, reservas } = useHotel();
+  const { habitaciones, tipos, reservas, cupones, resenas } = useHotel();
 
   // Metrics by Type
   const revenueByType = tipos.map((t) => {
@@ -55,7 +59,68 @@ export const AdminReportsView: React.FC = () => {
     CANCELADA: reservas.filter((r) => r.estado === 'CANCELADA').length,
   };
 
-  const totalReservasCount = Math.max(1, reservas.length);
+  // 14-Day Occupancy Forecast / History Chart (Dec 10 to Dec 23, 2026)
+  const occupancy14Days = useMemo(() => {
+    const days: { dateStr: string; label: string; occupied: number; rate: number }[] = [];
+    for (let day = 10; day <= 23; day++) {
+      const dateStr = `2026-12-${String(day).padStart(2, '0')}`;
+      const occupiedCount = reservas.filter((r) => {
+        if (r.estado === 'CANCELADA') return false;
+        return dateStr >= r.fecha_entrada && dateStr < r.fecha_salida;
+      }).length;
+      
+      const rate = Math.min(100, Math.round((occupiedCount / habitaciones.length) * 100));
+      days.push({
+        dateStr,
+        label: `${day} Dic`,
+        occupied: occupiedCount,
+        rate,
+      });
+    }
+    return days;
+  }, [reservas, habitaciones]);
+
+  // Coupon performance analytics
+  const couponStats = useMemo(() => {
+    const redemptions = reservas.filter((r) => r.cupon_aplicado && r.descuento);
+    const totalDiscountAmount = redemptions.reduce((acc, r) => acc + (r.descuento || 0), 0);
+    
+    // Usage counts by coupon code
+    const byCode: Record<string, { count: number; totalSavings: number }> = {};
+    redemptions.forEach((r) => {
+      const c = r.cupon_aplicado!;
+      if (!byCode[c]) byCode[c] = { count: 0, totalSavings: 0 };
+      byCode[c].count++;
+      byCode[c].totalSavings += r.descuento || 0;
+    });
+
+    return {
+      totalRedemptions: redemptions.length,
+      totalDiscountAmount,
+      byCode,
+    };
+  }, [reservas]);
+
+  // Overall satisfaction & ratings analytics
+  const ratingStats = useMemo(() => {
+    if (resenas.length === 0) {
+      return { promedio: 0, total: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } };
+    }
+    const sum = resenas.reduce((acc, r) => acc + r.calificacion, 0);
+    const promedio = Number((sum / resenas.length).toFixed(1));
+    const dist: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    resenas.forEach((r) => {
+      if (dist[r.calificacion] !== undefined) {
+        dist[r.calificacion]++;
+      }
+    });
+
+    return {
+      promedio,
+      total: resenas.length,
+      distribution: dist,
+    };
+  }, [resenas]);
 
   const handlePrintReport = () => {
     window.print();
@@ -73,7 +138,7 @@ export const AdminReportsView: React.FC = () => {
             Reportes de Ocupación e Ingresos
           </h1>
           <p className="text-sm text-stone-600 mt-1">
-            Análisis consolidado de rendimiento por tipo de habitación, pisos e historial de reservas del hotel.
+            Análisis consolidado de ocupación, curvas temporales, cupones promocionales y satisfacción de huéspedes.
           </p>
         </div>
 
@@ -84,6 +149,69 @@ export const AdminReportsView: React.FC = () => {
           <Download className="w-3.5 h-3.5" />
           <span>Imprimir / Exportar Reporte</span>
         </button>
+      </div>
+
+      {/* Feature 2: High-Level Occupancy Curve & Daily Occupancy Chart */}
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-amber-700" />
+              <h2 className="font-display font-bold text-lg text-stone-900">
+                Curva de Ocupación Diaria (Temporada Alta - Diciembre 2026)
+              </h2>
+            </div>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Porcentaje de ocupación sobre la capacidad total de 30 habitaciones boutique.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-medium text-stone-600">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-amber-700 inline-block" />
+              <span>Alta Ocupación (&ge; 60%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block" />
+              <span>Moderada (&lt; 60%)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bar & SVG Line Chart */}
+        <div className="pt-4">
+          <div className="grid grid-cols-7 sm:grid-cols-14 gap-2 items-end h-56 pb-4 border-b border-stone-100">
+            {occupancy14Days.map((item) => {
+              const isHigh = item.rate >= 60;
+              return (
+                <div key={item.dateStr} className="flex flex-col items-center h-full justify-end group">
+                  {/* Tooltip value */}
+                  <span className="text-[10px] font-mono-numbers font-bold text-stone-600 mb-1 opacity-80 group-hover:opacity-100 group-hover:text-amber-900 transition-opacity">
+                    {item.rate}%
+                  </span>
+
+                  {/* Vertical bar */}
+                  <div className="w-full bg-stone-100 rounded-t-lg h-40 flex items-end p-0.5 overflow-hidden">
+                    <div
+                      className={`w-full rounded-t-md transition-all duration-700 ${
+                        isHigh ? 'bg-amber-700 group-hover:bg-amber-800' : 'bg-emerald-600 group-hover:bg-emerald-700'
+                      }`}
+                      style={{ height: `${Math.max(8, item.rate)}%` }}
+                    />
+                  </div>
+
+                  {/* Date label */}
+                  <span className="text-[10px] text-stone-500 font-medium mt-2 whitespace-nowrap">
+                    {item.label}
+                  </span>
+                  <span className="text-[9px] text-stone-400 font-mono-numbers">
+                    {item.occupied} habs
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Grid: Charts & Visual breakdown */}
@@ -192,6 +320,151 @@ export const AdminReportsView: React.FC = () => {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid: Coupons & Reviews Systems Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Cupones y Descuentos */}
+        <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-amber-700" />
+              <h3 className="font-display font-bold text-base text-stone-900">
+                Efectividad de Cupones y Descuentos
+              </h3>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+              {cupones.length} cupones activos
+            </span>
+          </div>
+
+          <p className="text-xs text-stone-500">
+            Ahorro otorgado a huéspedes y rendimiento por código promocional.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 py-2 text-xs">
+            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/60">
+              <span className="text-stone-400 block text-[11px]">Reservas con Descuento</span>
+              <span className="text-xl font-bold font-mono-numbers text-stone-900 mt-0.5 block">
+                {couponStats.totalRedemptions}
+              </span>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200/60">
+              <span className="text-emerald-700 block text-[11px]">Total Ahorro Otorgado</span>
+              <span className="text-xl font-bold font-mono-numbers text-emerald-950 mt-0.5 block">
+                {formatCOP(couponStats.totalDiscountAmount)}
+              </span>
+            </div>
+          </div>
+
+          {/* List of active promotional codes */}
+          <div className="space-y-2 pt-2 border-t border-stone-100">
+            <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+              Códigos de Descuento Disponibles
+            </h4>
+            <div className="space-y-2">
+              {cupones.map((c) => (
+                <div
+                  key={c.codigo}
+                  className="p-2.5 bg-stone-50 rounded-xl border border-stone-200/70 flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono-numbers font-bold text-stone-900 bg-white px-2 py-0.5 rounded border border-stone-200">
+                        {c.codigo}
+                      </span>
+                      <span className="text-stone-600">{c.descripcion}</span>
+                    </div>
+                    {c.minimo_noches && (
+                      <span className="text-[10px] text-stone-400 block mt-0.5">
+                        Mínimo {c.minimo_noches} noches
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-bold text-amber-800 shrink-0 font-mono-numbers">
+                    {c.tipo === 'PORCENTAJE' ? `${c.valor}% OFF` : `-${formatCOP(c.valor)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sistema de Calificaciones */}
+        <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <h3 className="font-display font-bold text-base text-stone-900">
+                Índice de Calificaciones & Reputación
+              </h3>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-mono-numbers">
+              {ratingStats.promedio} / 5.0
+            </span>
+          </div>
+
+          <p className="text-xs text-stone-500">
+            Evaluaciones y retroalimentación dejadas por huéspedes verificados.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 py-2 text-xs">
+            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/60">
+              <span className="text-stone-400 block text-[11px]">Opiniones Verificadas</span>
+              <span className="text-xl font-bold font-mono-numbers text-stone-900 mt-0.5 block">
+                {ratingStats.total}
+              </span>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/60">
+              <span className="text-amber-800 block text-[11px]">Puntuación Promedio</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-xl font-bold font-mono-numbers text-amber-950">
+                  {ratingStats.promedio}
+                </span>
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`w-3.5 h-3.5 ${
+                        s <= Math.round(ratingStats.promedio)
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-stone-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Star distribution */}
+          <div className="space-y-1.5 pt-2 border-t border-stone-100 text-xs">
+            <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-2">
+              Distribución de Estrellas
+            </h4>
+            {[5, 4, 3, 2, 1].map((stars) => {
+              const count = (ratingStats.distribution as any)[stars] || 0;
+              const pct = ratingStats.total > 0 ? Math.round((count / ratingStats.total) * 100) : 0;
+
+              return (
+                <div key={stars} className="flex items-center gap-3">
+                  <span className="w-12 text-stone-600 font-mono-numbers flex items-center gap-1">
+                    {stars} <Star className="w-3 h-3 fill-amber-400 text-amber-400 inline" />
+                  </span>
+                  <div className="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-amber-600 h-2 rounded-full transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-stone-400 font-mono-numbers text-[11px]">
+                    {count}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
