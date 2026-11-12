@@ -212,11 +212,11 @@ $$\text{Existe Solapamiento} \iff (r_{\text{entrada}} < \text{nuevaSalida}) \lan
 
 ### Endpoints Principales
 
-#### 🔐 Autenticación
+#### Autenticación
 - `POST /api/auth/register`: Registro de nuevos usuarios y creación de cliente asociado.
 - `POST /api/auth/login`: Autenticación con email y contraseña, retorno de token JWT.
 
-#### 🛏️ Habitaciones
+#### Habitaciones
 - `GET /api/habitaciones`: Catálogo completo de habitaciones con tipo y servicios.
 - `GET /api/habitaciones/disponibles`: Búsqueda por parámetros (`fecha_entrada`, `fecha_salida`, `huespedes`, `id_tipo`).
 - `GET /api/habitaciones/:id`: Detalle de una habitación específica.
@@ -224,12 +224,12 @@ $$\text{Existe Solapamiento} \iff (r_{\text{entrada}} < \text{nuevaSalida}) \lan
 - `PUT /api/habitaciones/:id`: [ADMIN] Modificar datos de una habitación.
 - `PATCH /api/habitaciones/:id/estado`: [ADMIN] Alternar estado (`DISPONIBLE`, `MANTENIMIENTO`, etc.).
 
-#### 📅 Reservas
+#### Reservas
 - `GET /api/reservas`: Listar reservas (filtrado automático: administradores ven todas; clientes solo las propias).
 - `GET /api/reservas/:id`: Detalle de una reserva con código único.
 - `POST /api/reservas`: Crear reserva con validación estricta de solapamiento y cálculo de importe en backend.
 - `PATCH /api/reservas/:id/estado`: Cambio de estado (`CONFIRMADA`, `FINALIZADA`, `CANCELADA`).
 
-#### 📊 Reportes y Dashboard
+#### Reportes y Dashboard
 - `GET /api/reportes/dashboard`: [ADMIN] KPIs de ocupación, total habitaciones, disponibles, mantenimiento e ingresos acumulados en COP.
 

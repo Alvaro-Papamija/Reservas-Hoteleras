@@ -1,10 +1,10 @@
-# 📚 Centro de Documentación - Alborada Hotel Boutique
+# Centro de Documentación - Alborada Hotel Boutique
 
 Bienvenido a la documentación oficial y técnica del **Sistema de Reservas y Gestión Hotelera de Alborada Hotel Boutique**. Este espacio recopila los requisitos, especificaciones técnicas, flujos de usuario, hoja de ruta y reportes de calidad del proyecto.
 
 ---
 
-## 🗺️ Mapa de Documentación
+## Mapa de Documentación
 
 | Documento | Descripción | Audiencia principal |
 |---|---|---|
@@ -16,7 +16,7 @@ Bienvenido a la documentación oficial y técnica del **Sistema de Reservas y Ge
 
 ---
 
-## 🏗️ Resumen del Sistema
+## Resumen del Sistema
 
 ### Arquitectura General
 El sistema implementa una arquitectura desacoplada y orientada a servicios:
@@ -49,7 +49,7 @@ El sistema implementa una arquitectura desacoplada y orientada a servicios:
 
 ---
 
-## 🚀 Inicio Rápido de Desarrollo
+## Inicio Rápido de Desarrollo
 
 ### Requisitos Previos
 - **Node.js** v20+ o v26+ (LTS recomendado).
