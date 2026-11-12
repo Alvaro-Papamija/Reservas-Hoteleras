@@ -12,18 +12,19 @@
 
 El sistema de reservas hoteleras cuenta con una suite completa de pruebas unitarias y de integración que validan el 100% de las reglas de negocio descritas en el PRD:
 
-- **Total de pruebas ejecutadas:** 12 tests
-- **Pruebas superadas (PASS):** 12 (100%)
+- **Total de pruebas ejecutadas:** 17 tests
+- **Pruebas superadas (PASS):** 17 (100%)
 - **Pruebas fallidas (FAIL):** 0 (0%)
-- **Tiempo total de ejecución:** 47 ms
+- **Suites de prueba:** 2 archivos (`hotelBusinessLogic.test.ts`, `featuresPhase2.test.ts`)
 
 ```bash
 > npm test
 
- ✓ src/__tests__/hotelBusinessLogic.test.ts (12 tests) 47ms
+ ✓ src/__tests__/hotelBusinessLogic.test.ts (12 tests) 98ms
+ ✓ src/__tests__/featuresPhase2.test.ts (5 tests) 46ms
 
- Test Files  1 passed (1)
-      Tests  12 passed (12)
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
 ```
 
 ---
