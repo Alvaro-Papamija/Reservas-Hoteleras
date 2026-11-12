@@ -20,6 +20,7 @@ export interface Habitacion {
   estado: EstadoHabitacion;
   descripcion: string;
   imagen: string;
+  galeria?: string[];
   servicios: string[];
   activa: boolean;
 }

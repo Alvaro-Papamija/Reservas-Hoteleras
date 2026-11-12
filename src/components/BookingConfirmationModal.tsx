@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Reserva } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
+import { generarComprobantePDF } from '../utils/pdfGenerator';
+import { EmailConfirmationModal } from './EmailConfirmationModal';
 import {
   CheckCircle2,
   Calendar,
@@ -11,6 +13,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Sparkles,
+  Download,
+  Mail,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -26,11 +30,16 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   onContinueBrowsing,
 }) => {
   const [copied, setCopied] = React.useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(reserva.codigo);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadPDF = () => {
+    generarComprobantePDF(reserva);
   };
 
   const handlePrint = () => {
@@ -145,9 +154,27 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
 
           {/* Actions */}
           <div className="space-y-2.5 pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleDownloadPDF}
+                className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Download className="w-4 h-4" />
+                <span>Descargar PDF</span>
+              </button>
+
+              <button
+                onClick={() => setShowEmailModal(true)}
+                className="w-full py-2.5 rounded-xl border border-amber-300 hover:bg-amber-50 text-amber-900 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Mail className="w-4 h-4 text-amber-700" />
+                <span>Ver Correo</span>
+              </button>
+            </div>
+
             <button
               onClick={onViewMyReservations}
-              className="w-full py-3 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-800 text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2"
             >
               <span>Ver mis reservas</span>
               <ChevronRight className="w-4 h-4" />
@@ -172,6 +199,14 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
           </div>
         </div>
       </motion.div>
+
+      {/* Email Preview Modal */}
+      {showEmailModal && (
+        <EmailConfirmationModal
+          reserva={reserva}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
     </div>
   );
 };

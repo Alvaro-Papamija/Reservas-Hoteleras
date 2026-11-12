@@ -10,6 +10,7 @@ import {
   Calendar,
   Sparkles,
   Check,
+  Images,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -184,6 +185,11 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                 <div className={`absolute top-3 right-3 text-[11px] font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 ${statusStyle.bg} ${statusStyle.text} backdrop-blur-xs`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
                   <span>{statusStyle.label}</span>
+                </div>
+
+                <div className="absolute bottom-2.5 right-2.5 bg-stone-950/75 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs border border-white/10">
+                  <Images className="w-3 h-3 text-amber-300" />
+                  <span>Galería</span>
                 </div>
               </div>
 

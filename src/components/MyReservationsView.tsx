@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useHotel } from '../context/HotelContext';
 import { Reserva } from '../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable, getEstadoReservaColor } from '../utils/formatters';
+import { generarComprobantePDF } from '../utils/pdfGenerator';
+import { EmailConfirmationModal } from './EmailConfirmationModal';
 import {
   Calendar,
   BedDouble,
@@ -13,6 +15,8 @@ import {
   Search,
   ArrowRight,
   ShieldAlert,
+  Download,
+  Mail,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,6 +29,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA'>('TODAS');
   const [selectedReservaForCancel, setSelectedReservaForCancel] = useState<Reserva | null>(null);
+  const [selectedReservaForEmail, setSelectedReservaForEmail] = useState<Reserva | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
 
@@ -227,10 +232,24 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
                 {/* Footer and cancel action */}
                 <div className="pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                  <div className="text-stone-500">
-                    {reserva.notas && (
-                      <span className="italic">"{reserva.notas}"</span>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => generarComprobantePDF(reserva)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold transition-colors"
+                      title="Descargar comprobante en formato PDF"
+                    >
+                      <Download className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Comprobante PDF</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedReservaForEmail(reserva)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold transition-colors"
+                      title="Ver vista previa del correo de confirmación"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Ver Correo</span>
+                    </button>
                   </div>
 
                   {/* Cancel button with 48h policy enforcement */}
@@ -259,6 +278,14 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
             );
           })}
         </div>
+      )}
+
+      {/* Email Confirmation Modal */}
+      {selectedReservaForEmail && (
+        <EmailConfirmationModal
+          reserva={selectedReservaForEmail}
+          onClose={() => setSelectedReservaForEmail(null)}
+        />
       )}
 
       {/* Cancellation Confirmation Modal */}

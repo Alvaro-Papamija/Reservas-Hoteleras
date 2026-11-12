@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Reserva, EstadoReserva } from '../../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable, getEstadoReservaColor } from '../../utils/formatters';
+import { generarComprobantePDF } from '../../utils/pdfGenerator';
+import { EmailConfirmationModal } from '../EmailConfirmationModal';
 import {
   Search,
   Filter,
@@ -14,6 +16,8 @@ import {
   Calendar,
   X,
   User,
+  Download,
+  Mail,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -23,6 +27,7 @@ export const AdminReservationsView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState<EstadoReserva | 'TODAS'>('TODAS');
   const [selectedReserva, setSelectedReserva] = useState<Reserva | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -308,7 +313,25 @@ export const AdminReservationsView: React.FC = () => {
               )}
             </div>
 
-            <div className="pt-4 border-t border-stone-200 flex items-center justify-end">
+            <div className="pt-4 border-t border-stone-200 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => generarComprobantePDF(selectedReserva)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Descargar PDF</span>
+                </button>
+
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="px-3.5 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Ver Correo</span>
+                </button>
+              </div>
+
               <button
                 onClick={() => setSelectedReserva(null)}
                 className="px-5 py-2 rounded-xl bg-stone-900 text-white text-xs font-semibold"
@@ -318,6 +341,14 @@ export const AdminReservationsView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Email confirmation modal */}
+      {showEmailModal && selectedReserva && (
+        <EmailConfirmationModal
+          reserva={selectedReserva}
+          onClose={() => setShowEmailModal(false)}
+        />
       )}
     </div>
   );
