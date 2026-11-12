@@ -1,10 +1,10 @@
-# 🏨 Alborada Hotel Boutique - Sistema de Reservas
+# Alborada Hotel Boutique - Sistema de Reservas
 
 Sistema integral de reservas y gestión hotelera desarrollado para **Alborada Hotel Boutique**. Proporciona a los clientes una plataforma en línea intuitiva para consultar disponibilidad y reservar habitaciones en tiempo real, e incorpora un panel administrativo completo para el control de inventario, ocupación y estados de reserva.
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
 - **Catálogo de Habitaciones**: Visualización de 30 habitaciones distribuidas en 3 pisos, con fotos de alta resolución, capacidades, servicios incluidos y tarifas en pesos colombianos (COP).
 - **Motor de Disponibilidad en Tiempo Real (RN01)**: Algoritmo de no superposición $[fecha\_entrada, fecha\_salida)$ que impide el overbooking y permite check-in el mismo día del check-out de otra reserva.
@@ -15,7 +15,7 @@ Sistema integral de reservas y gestión hotelera desarrollado para **Alborada Ho
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 - **Frontend**: React 19, TypeScript, Vite.
 - **Estilos & Animaciones**: Tailwind CSS v4, Lucide Icons, Motion UI.
@@ -25,7 +25,7 @@ Sistema integral de reservas y gestión hotelera desarrollado para **Alborada Ho
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## Instalación y Puesta en Marcha
 
 ### Prerrequisitos
 - [Node.js](https://nodejs.org/) v20 o superior (LTS recomendado).
@@ -55,7 +55,7 @@ npm test
 
 ---
 
-## 📖 Documentación Completa
+## Documentación Completa
 
 Toda la documentación técnica, funcional y de arquitectura se encuentra centralizada en la carpeta **[`docs/`](./docs/README.md)**:
 
@@ -70,7 +70,7 @@ Toda la documentación técnica, funcional y de arquitectura se encuentra centra
 
 ---
 
-## 👤 Autor
+## Autor
 - **Desarrollador y Responsable:** Alvaro Andrés Papamija
 - **Institución:** SENA - 2026
 
