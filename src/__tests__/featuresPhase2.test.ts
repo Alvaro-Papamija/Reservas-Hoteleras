@@ -66,3 +66,4 @@ describe('Fase 2 - Generador de Comprobantes PDF y Correo Transaccional', () => 
     expect(reservaMuestra.cliente_nombre).toBe('Laura Gómez');
   });
 });
+
