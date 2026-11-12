@@ -239,3 +239,4 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
     </div>
   );
 };
+

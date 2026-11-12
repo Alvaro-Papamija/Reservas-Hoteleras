@@ -221,3 +221,4 @@ export const generarComprobantePDF = (reserva: Reserva): void => {
   // Save to file
   doc.save(`Comprobante-Reserva-${reserva.codigo}.pdf`);
 };
+
