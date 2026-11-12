@@ -232,3 +232,4 @@ $$\text{Existe Solapamiento} \iff (r_{\text{entrada}} < \text{nuevaSalida}) \lan
 
 #### 📊 Reportes y Dashboard
 - `GET /api/reportes/dashboard`: [ADMIN] KPIs de ocupación, total habitaciones, disponibles, mantenimiento e ingresos acumulados en COP.
+

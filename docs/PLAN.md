@@ -69,3 +69,4 @@ Semana 4: Pruebas Automatizadas (QA), Documentación y Despliegue
 | Caída del servidor o tiempo de respuesta elevado | Media | Baja | Consultas parametrizadas e indexadas sobre fechas de reservas y compresión gzip en frontend. |
 | Pérdida de credenciales o filtración de datos sensibles | Alta | Baja | Variables de entorno aisladas (`.env`), contraseñas hasheadas con bcrypt y tokens JWT con expiración. |
 | Incompatibilidad de dependencias entre paquetes | Media | Media | Fijación de versiones en `package.json` y control estricto de `package-lock.json`. |
+

@@ -71,3 +71,4 @@ El sistema de reservas hoteleras cuenta con una suite completa de pruebas unitar
 | **Confirmación** | `BookingConfirmationModal.tsx`, Generación de código único `ALB-XXXXX` | **PASS** |
 | **Mis Reservas** | `MyReservationsView.tsx`, Listado filtrado por cliente, política de cancelación (48h) | **PASS** |
 | **Admin Dashboard** | `AdminDashboard.tsx`, KPIs de ocupación, matriz por piso y control de estados | **PASS** |
+

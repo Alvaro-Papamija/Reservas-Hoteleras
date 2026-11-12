@@ -73,3 +73,4 @@ Toda la documentación técnica, funcional y de arquitectura se encuentra centra
 ## 👤 Autor
 - **Desarrollador y Responsable:** Alvaro Andrés Papamija
 - **Institución:** SENA - 2026
+

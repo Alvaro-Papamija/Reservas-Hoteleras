@@ -72,3 +72,4 @@ npm run build
 # 5. Verificación estricta de TypeScript
 npm run lint
 ```
+

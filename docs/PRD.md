@@ -221,3 +221,4 @@ Como administrador, quiero ver indicadores y reportes para tomar decisiones sobr
   - PENDIENTE o CONFIRMADA $\rightarrow$ CANCELADA
 - **RN07 (Mantenimiento):** Una habitación en MANTENIMIENTO o inactiva no se ofrece en la búsqueda de disponibilidad.
 - **RN08 (Unicidad de cuenta):** Un correo electrónico solo puede pertenecer a un usuario registrado.
+

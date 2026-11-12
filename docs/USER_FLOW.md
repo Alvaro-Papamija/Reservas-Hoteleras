@@ -89,3 +89,4 @@ flowchart TD
     E --> H[Inventario actualizado en tiempo real]
     F --> I[Disponibilidad recalculada automáticamente]
 ```
+
