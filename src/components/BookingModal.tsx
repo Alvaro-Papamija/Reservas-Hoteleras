@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHotel } from '../context/HotelContext';
-import { Habitacion, Reserva } from '../types/hotel';
+import { Habitacion, Reserva, Cupon } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
 import {
   X,
@@ -13,6 +13,8 @@ import {
   CreditCard,
   Lock,
   Sparkles,
+  Tag,
+  Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -33,12 +35,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { tipos, currentCliente, currentUser, createReserva, calculateTotal } = useHotel();
+  const { tipos, currentCliente, currentUser, createReserva, calculateTotal, validarCupon } = useHotel();
 
   const [fechaEntrada, setFechaEntrada] = useState(defaultEntrada);
   const [fechaSalida, setFechaSalida] = useState(defaultSalida);
   const [huespedes, setHuespedes] = useState(defaultHuespedes);
   const [notas, setNotas] = useState('');
+
+  // Coupons
+  const [codigoCupon, setCodigoCupon] = useState('');
+  const [cuponAplicado, setCuponAplicado] = useState<{ cupon: Cupon; descuento: number } | null>(null);
+  const [mensajeCupon, setMensajeCupon] = useState<{ exito: boolean; texto: string } | null>(null);
 
   // Guest details (prepopulated from logged-in client or default)
   const [nombre, setNombre] = useState(currentCliente?.nombre || 'Laura');
@@ -54,7 +61,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   const tipo = tipos.find((t) => t.id_tipo === habitacion.id_tipo);
   const precioNoche = tipo ? tipo.precio_base : 180000;
-  const { noches, total } = calculateTotal(precioNoche, fechaEntrada, fechaSalida);
+  const { noches, total: subtotal } = calculateTotal(precioNoche, fechaEntrada, fechaSalida);
+
+  const descuento = cuponAplicado ? cuponAplicado.descuento : 0;
+  const totalFinal = Math.max(0, subtotal - descuento);
+
+  const handleApplyCupon = () => {
+    setMensajeCupon(null);
+    const res = validarCupon(codigoCupon, subtotal, noches);
+    if (res.valido && res.cupon) {
+      setCuponAplicado({ cupon: res.cupon, descuento: res.descuento });
+      setMensajeCupon({ exito: true, texto: res.mensaje || '¡Cupón aplicado!' });
+    } else {
+      setCuponAplicado(null);
+      setMensajeCupon({ exito: false, texto: res.mensaje || 'Cupón no válido' });
+    }
+  };
+
+  const handleRemoveCupon = () => {
+    setCuponAplicado(null);
+    setCodigoCupon('');
+    setMensajeCupon(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +96,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       fecha_salida: fechaSalida,
       cantidad_huespedes: huespedes,
       notas,
+      cupon_codigo: cuponAplicado?.cupon.codigo,
       cliente_override: {
         nombre,
         apellido,
@@ -270,6 +299,52 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
+            {/* Coupon / Discount Input Block */}
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/90 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-stone-800">
+                  <Tag className="w-4 h-4 text-amber-700" />
+                  <span>¿Tienes un cupón de descuento?</span>
+                </div>
+                <span className="text-[10px] text-stone-400">Ej: ALBORADA10, ESCAPADA50K</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={codigoCupon}
+                  disabled={!!cuponAplicado}
+                  onChange={(e) => setCodigoCupon(e.target.value.toUpperCase())}
+                  placeholder="Ingresa tu cupón"
+                  className="flex-1 px-3 py-2 rounded-xl border border-stone-200 text-xs font-mono-numbers uppercase tracking-wider outline-none focus:ring-1 focus:ring-amber-700 bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                />
+                {cuponAplicado ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCupon}
+                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors"
+                  >
+                    Remover
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyCupon}
+                    className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition-colors"
+                  >
+                    Aplicar
+                  </button>
+                )}
+              </div>
+
+              {mensajeCupon && (
+                <div className={`text-[11px] font-medium flex items-center gap-1.5 ${mensajeCupon.exito ? 'text-emerald-700' : 'text-rose-600'}`}>
+                  {mensajeCupon.exito && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                  <span>{mensajeCupon.texto}</span>
+                </div>
+              )}
+            </div>
+
             {/* Pricing Calculation Summary (Server-authoritative per RN02) */}
             <div className="bg-amber-50/60 rounded-2xl p-4 border border-amber-200/80 space-y-2">
               <div className="flex justify-between text-xs text-stone-600">
@@ -281,6 +356,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <span className="font-mono-numbers font-medium">{noches} noches</span>
               </div>
               <div className="flex justify-between text-xs text-stone-600">
+                <span>Subtotal estancia:</span>
+                <span className="font-mono-numbers font-medium">{formatCOP(subtotal)}</span>
+              </div>
+
+              {cuponAplicado && (
+                <div className="flex justify-between text-xs text-emerald-700 font-semibold bg-emerald-100/60 px-2 py-1 rounded-lg border border-emerald-200/80">
+                  <span>Descuento cupón ({cuponAplicado.cupon.codigo}):</span>
+                  <span className="font-mono-numbers">- {formatCOP(descuento)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-xs text-stone-600">
                 <span>Impuestos & Servicios hoteleros:</span>
                 <span className="text-emerald-700 font-medium">Incluidos (100% transparente)</span>
               </div>
@@ -291,7 +378,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <span className="text-[11px] text-stone-500">Se abona al momento del check-in</span>
                 </div>
                 <span className="text-xl font-bold text-amber-950 font-mono-numbers">
-                  {formatCOP(total)}
+                  {formatCOP(totalFinal)}
                 </span>
               </div>
             </div>

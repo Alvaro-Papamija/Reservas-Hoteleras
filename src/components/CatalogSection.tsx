@@ -10,6 +10,8 @@ import {
   Calendar,
   Sparkles,
   Check,
+  Images,
+  Star,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -22,7 +24,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
   onSelectHabitacion,
   onOpenDetails,
 }) => {
-  const { habitaciones, tipos } = useHotel();
+  const { habitaciones, tipos, getRatingHabitacion } = useHotel();
 
   const [selectedTipo, setSelectedTipo] = useState<number | 'todos'>('todos');
   const [selectedPiso, setSelectedPiso] = useState<number | 'todos'>('todos');
@@ -185,6 +187,11 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                   <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
                   <span>{statusStyle.label}</span>
                 </div>
+
+                <div className="absolute bottom-2.5 right-2.5 bg-stone-950/75 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs border border-white/10">
+                  <Images className="w-3 h-3 text-amber-300" />
+                  <span>Galería</span>
+                </div>
               </div>
 
               {/* Card Body */}
@@ -199,9 +206,23 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                     <span>Piso {hab.piso}</span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-stone-900 mb-2">
-                    Suite {hab.numero} · {tipo?.nombre}
-                  </h3>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-stone-900">
+                      Suite {hab.numero} · {tipo?.nombre}
+                    </h3>
+                    {(() => {
+                      const rating = getRatingHabitacion(hab.id_habitacion);
+                      return (
+                        <div className="flex items-center gap-1 text-xs text-amber-800 font-semibold shrink-0 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
+                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                          <span>{rating.promedio}</span>
+                          {rating.total > 0 && (
+                            <span className="text-[10px] text-stone-400 font-normal">({rating.total})</span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
 
                   <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed mb-4">
                     {hab.descripcion}

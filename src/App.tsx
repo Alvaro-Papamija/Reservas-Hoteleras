@@ -17,6 +17,7 @@ import { AdminRoomsView } from './components/admin/AdminRoomsView';
 import { AdminReservationsView } from './components/admin/AdminReservationsView';
 import { AdminClientsView } from './components/admin/AdminClientsView';
 import { AdminReportsView } from './components/admin/AdminReportsView';
+import { AdminCalendarView } from './components/admin/AdminCalendarView';
 
 import { Habitacion, Reserva } from './types/hotel';
 import {
@@ -235,6 +236,7 @@ const MainApp: React.FC = () => {
         {activeView === 'admin-dashboard' && <AdminDashboard />}
         {activeView === 'admin-habitaciones' && <AdminRoomsView />}
         {activeView === 'admin-reservas' && <AdminReservationsView />}
+        {activeView === 'admin-calendario' && <AdminCalendarView />}
         {activeView === 'admin-clientes' && <AdminClientsView />}
         {activeView === 'admin-reportes' && <AdminReportsView />}
       </main>

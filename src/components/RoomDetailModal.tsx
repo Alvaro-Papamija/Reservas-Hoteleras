@@ -16,6 +16,10 @@ import {
   Tv,
   Coffee,
   Waves,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,15 +29,58 @@ interface RoomDetailModalProps {
   onProceedToBook: (hab: Habitacion, entrada?: string, salida?: string) => void;
 }
 
+// Curated high-resolution boutique hotel gallery fallbacks
+const getRoomGallery = (hab: Habitacion): string[] => {
+  if (hab.galeria && hab.galeria.length > 0) {
+    return hab.galeria;
+  }
+
+  const galleryMap: Record<number, string[]> = {
+    1: [
+      hab.imagen,
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
+      '/src/assets/images/hero_resort_solarium_1794431399560.jpg',
+    ],
+    2: [
+      hab.imagen,
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
+      '/src/assets/images/hero_resort_solarium_1794431399560.jpg',
+    ],
+    3: [
+      hab.imagen,
+      'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80',
+      '/src/assets/images/hero_resort_solarium_1794431399560.jpg',
+    ],
+    4: [
+      hab.imagen,
+      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
+      '/src/assets/images/hero_resort_solarium_1794431399560.jpg',
+    ],
+    5: [
+      hab.imagen,
+      'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
+      '/src/assets/images/hero_resort_solarium_1794431399560.jpg',
+    ],
+  };
+
+  return galleryMap[hab.id_tipo] || [hab.imagen];
+};
+
 export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
   habitacion,
   onClose,
   onProceedToBook,
 }) => {
-  const { tipos, checkOverlap, calculateNights } = useHotel();
+  const { tipos, checkOverlap, calculateNights, getRatingHabitacion, getResenasHabitacion } = useHotel();
 
   const [fechaEntrada, setFechaEntrada] = useState('2026-12-15');
   const [fechaSalida, setFechaSalida] = useState('2026-12-18');
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   if (!habitacion) return null;
 
@@ -41,8 +88,23 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
   const precio = tipo ? tipo.precio_base : 180000;
   const statusStyle = getEstadoHabitacionColor(habitacion.estado);
 
+  const photos = getRoomGallery(habitacion);
+  const currentPhoto = photos[selectedPhotoIndex] || habitacion.imagen;
+
+  const handlePrevPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+  };
+
+  const handleNextPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+  };
+
   const nights = calculateNights(fechaEntrada, fechaSalida);
   const hasOverlap = checkOverlap(habitacion.id_habitacion, fechaEntrada, fechaSalida);
+  const ratingData = getRatingHabitacion(habitacion.id_habitacion);
+  const resenasHab = getResenasHabitacion(habitacion.id_habitacion);
 
   return (
     <AnimatePresence>
@@ -57,23 +119,56 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-stone-900/60 hover:bg-stone-900 text-white flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-stone-900/60 hover:bg-stone-900 text-white flex items-center justify-center transition-colors shadow-md"
             aria-label="Cerrar modal"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Top Image Banner */}
-          <div className="relative h-72 sm:h-80 w-full overflow-hidden bg-stone-900">
-            <img
-              src={habitacion.imagen}
-              alt={`Habitación ${habitacion.numero}`}
+          {/* Top Interactive Image Gallery Banner */}
+          <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-stone-950 select-none group">
+            <motion.img
+              key={currentPhoto}
+              src={currentPhoto}
+              alt={`Habitación ${habitacion.numero} - Foto ${selectedPhotoIndex + 1}`}
               referrerPolicy="no-referrer"
+              initial={{ opacity: 0.7 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25 }}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-black/30 pointer-events-none" />
 
-            <div className="absolute bottom-6 left-6 right-6 text-white">
+            {/* Gallery Navigation Controls */}
+            {photos.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevPhoto}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all opacity-80 group-hover:opacity-100"
+                  aria-label="Foto anterior"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNextPhoto}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all opacity-80 group-hover:opacity-100"
+                  aria-label="Siguiente foto"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            {/* Photo Counter Badge */}
+            <div className="absolute top-4 left-4 z-20 bg-stone-900/80 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/20">
+              <Images className="w-3.5 h-3.5 text-amber-400" />
+              <span>
+                Foto {selectedPhotoIndex + 1} de {photos.length}
+              </span>
+            </div>
+
+            {/* Room Title on Banner Bottom */}
+            <div className="absolute bottom-16 sm:bottom-20 left-6 right-6 text-white pointer-events-none">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1">
                 <span>{tipo?.nombre}</span>
                 <span aria-hidden="true">·</span>
@@ -85,6 +180,29 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
                 Habitación {habitacion.numero} · {tipo?.nombre}
               </h2>
             </div>
+
+            {/* Thumbnail Strip */}
+            {photos.length > 1 && (
+              <div className="absolute bottom-3 left-6 right-6 z-20 flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+                {photos.map((imgUrl, idx) => (
+                  <button
+                    key={imgUrl + idx}
+                    onClick={() => setSelectedPhotoIndex(idx)}
+                    className={`relative w-14 h-10 sm:w-16 sm:h-11 rounded-lg overflow-hidden shrink-0 transition-all border-2 ${
+                      selectedPhotoIndex === idx
+                        ? 'border-amber-400 scale-105 shadow-md ring-2 ring-amber-400/40'
+                        : 'border-white/30 opacity-60 hover:opacity-100 hover:border-white'
+                    }`}
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Miniatura ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Modal Body */}
@@ -119,28 +237,91 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
               </div>
             </div>
 
-            {/* Amenities Checklist */}
+            {/* Services List */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
-                Servicios & Amenidades Incluidas
+                Servicios y Comodidades Incluidas
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-stone-700">
-                {habitacion.servicios.map((s) => (
-                  <div key={s} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{s}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-stone-700">
+                {habitacion.servicios.map((srv) => (
+                  <div key={srv} className="flex items-center gap-2 py-1">
+                    <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>{srv}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Live Availability & Pricing Calculator inside modal */}
-            <div className="bg-stone-50 rounded-2xl p-5 border border-stone-200">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-700 mb-3">
-                Comprobar Estancia para esta Habitación
-              </h4>
+            {/* Ratings and Reviews Section */}
+            <div className="pt-2 border-t border-stone-100">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                    Opiniones y Calificaciones
+                  </h4>
+                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                    <span className="text-xs font-bold text-amber-900 font-mono-numbers">
+                      {ratingData.promedio > 0 ? ratingData.promedio.toFixed(1) : 'Nuevo'}
+                    </span>
+                    <span className="text-[11px] text-amber-700 font-mono-numbers">
+                      ({ratingData.total} {ratingData.total === 1 ? 'opinión' : 'opiniones'})
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              {resenasHab.length === 0 ? (
+                <div className="p-4 bg-stone-50 rounded-xl text-stone-500 text-xs text-center border border-stone-200/60">
+                  Esta habitación aún no cuenta con reseñas de huéspedes. Sé el primero en compartir tu experiencia tras tu estancia.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {resenasHab.slice(0, 3).map((r) => (
+                    <div
+                      key={r.id_resena}
+                      className="p-3.5 bg-stone-50 rounded-xl border border-stone-200/70 text-xs space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-stone-900">{r.cliente_nombre}</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((starVal) => (
+                            <Star
+                              key={starVal}
+                              className={`w-3 h-3 ${
+                                starVal <= r.calificacion
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-stone-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-[10px] text-stone-400 ml-1.5 font-mono-numbers">
+                            {r.fecha}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-stone-600 leading-relaxed italic">
+                        "{r.comentario}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Interactive Availability Verification Box */}
+            <div className="bg-stone-50 border border-stone-200/90 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-stone-900 uppercase tracking-wider">
+                  <Calendar className="w-4 h-4 text-amber-700" />
+                  <span>Verificar Disponibilidad y Cotizar</span>
+                </div>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
+                  {statusStyle.label}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] text-stone-500 block mb-1">Fecha de Entrada</label>
                   <input

@@ -126,6 +126,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                   Reservas del Hotel
                 </button>
                 <button
+                  onClick={() => setActiveView('admin-calendario')}
+                  className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                    activeView === 'admin-calendario' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                  }`}
+                >
+                  Calendario
+                </button>
+                <button
                   onClick={() => setActiveView('admin-clientes')}
                   className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
                     activeView === 'admin-clientes' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
@@ -315,6 +323,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                   className="text-left py-2 hover:text-amber-800"
                 >
                   Reservas del Hotel
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveView('admin-calendario');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left py-2 hover:text-amber-800"
+                >
+                  Calendario Visual
                 </button>
                 <button
                   onClick={() => {
