@@ -84,3 +84,4 @@ describe('Fase 3: Sistema de Calificaciones y Reseñas', () => {
     expect(resenasHab1.length).toBe(2);
   });
 });
+
