@@ -122,3 +122,4 @@ public class Usuario {
         this.fechaRegistro = fechaRegistro;
     }
 }
+
