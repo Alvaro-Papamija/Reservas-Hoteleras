@@ -200,3 +200,4 @@ export const NotificationsDropdown: React.FC = () => {
     </div>
   );
 };
+

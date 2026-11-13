@@ -99,3 +99,4 @@ describe('Fase 4: Sistema de Notificaciones Automáticas', () => {
     expect(buscada.leida).toBe(true);
   });
 });
+
