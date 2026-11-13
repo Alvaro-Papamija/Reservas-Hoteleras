@@ -11,6 +11,11 @@ import {
   DisponibilidadQuery,
   Cupon,
   Resena,
+  Notificacion,
+  RecomendacionIAQuery,
+  RecomendacionIAResult,
+  MensajeChat,
+  PrediccionOcupacionDia,
 } from '../types/hotel';
 import {
   INITIAL_HABITACIONES,
@@ -20,6 +25,8 @@ import {
   INITIAL_RESERVAS,
   INITIAL_CUPONES,
   INITIAL_RESENAS,
+  INITIAL_NOTIFICACIONES,
+  FAQ_ITEMS,
 } from '../data/mockData';
 
 interface BookingValidationResult {
@@ -36,6 +43,7 @@ interface HotelContextType {
   reservas: Reserva[];
   cupones: Cupon[];
   resenas: Resena[];
+  notificaciones: Notificacion[];
   currentRole: RolUsuario;
   currentUser: Usuario;
   currentCliente: Cliente | null;
@@ -46,6 +54,16 @@ interface HotelContextType {
   switchRole: (role: RolUsuario) => void;
   loginAs: (email: string) => boolean;
   logout: () => void;
+  
+  // Notifications actions
+  marcarNotificacionLeida: (idNotificacion: string) => void;
+  marcarTodasNotificacionesLeidas: () => void;
+  agregarNotificacion: (notif: Omit<Notificacion, 'id_notificacion' | 'fecha' | 'leida'>) => void;
+
+  // AI & Analytics features
+  recomendarHabitacionesIA: (query: RecomendacionIAQuery) => RecomendacionIAResult[];
+  consultarConciergeChat: (mensajeUsuario: string) => Promise<MensajeChat>;
+  calcularPrediccionOcupacion: (diasFuturos?: number) => PrediccionOcupacionDia[];
   
   // Business logic
   checkOverlap: (idHabitacion: number, fechaEntrada: string, fechaSalida: string, excludeReservaId?: number) => boolean;
@@ -118,6 +136,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_RESENAS;
   });
 
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>(() => {
+    const saved = localStorage.getItem('alborada_notificaciones');
+    return saved ? JSON.parse(saved) : INITIAL_NOTIFICACIONES;
+  });
+
   const [currentRole, setCurrentRole] = useState<RolUsuario>('CLIENTE');
   const [currentUser, setCurrentUser] = useState<Usuario>(INITIAL_USUARIOS[1]); // Default Laura Gómez (Cliente)
   const [activeView, setActiveView] = useState<any>('inicio');
@@ -146,6 +169,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('alborada_resenas', JSON.stringify(resenas));
   }, [resenas]);
+
+  useEffect(() => {
+    localStorage.setItem('alborada_notificaciones', JSON.stringify(notificaciones));
+  }, [notificaciones]);
 
   // Current client helper
   const currentCliente = clientes.find((c) => c.correo === currentUser.correo) || null;
@@ -323,6 +350,267 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { promedio, total: habResenas.length };
   };
 
+  // Automated Notification Actions
+  const marcarNotificacionLeida = (idNotificacion: string) => {
+    setNotificaciones((prev) =>
+      prev.map((n) => (n.id_notificacion === idNotificacion ? { ...n, leida: true } : n))
+    );
+  };
+
+  const marcarTodasNotificacionesLeidas = () => {
+    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+  };
+
+  const agregarNotificacion = (notif: Omit<Notificacion, 'id_notificacion' | 'fecha' | 'leida'>) => {
+    const nueva: Notificacion = {
+      ...notif,
+      id_notificacion: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      leida: false,
+    };
+    setNotificaciones((prev) => [nueva, ...prev]);
+  };
+
+  // Feature 1: AI Room Recommendation Engine
+  const recomendarHabitacionesIA = (query: RecomendacionIAQuery): RecomendacionIAResult[] => {
+    const { motivo_viaje, presupuesto_max, huespedes, preferencias } = query;
+    const candidatas = habitaciones.filter((h) => h.activa && h.estado !== 'MANTENIMIENTO');
+
+    const results: RecomendacionIAResult[] = candidatas.map((hab) => {
+      const tipo = tipos.find((t) => t.id_tipo === hab.id_tipo);
+      if (!tipo) return null as any;
+
+      let score = 65;
+      const razones: string[] = [];
+
+      // Capacity alignment
+      if (huespedes <= tipo.capacidad) {
+        score += 15;
+        razones.push(`Capacidad idónea para ${huespedes} ${huespedes === 1 ? 'huésped' : 'huéspedes'}.`);
+      } else {
+        score -= 25;
+      }
+
+      // Motive alignment
+      if (motivo_viaje === 'romantico') {
+        if (tipo.nombre === 'Suite') {
+          score += 20;
+          razones.push('Suite de lujo con lencería premium y atmósfera íntima.');
+        } else if (tipo.nombre === 'Doble') {
+          score += 15;
+          razones.push('Habitación doble cálida con acabados coloniales.');
+        }
+        if (hab.servicios.some((s) => s.toLowerCase().includes('balcón') || s.toLowerCase().includes('terraza'))) {
+          score += 10;
+          razones.push('Terraza o balcón privado para disfrutar el atardecer.');
+        }
+      } else if (motivo_viaje === 'negocios') {
+        if (tipo.nombre === 'Individual' || tipo.nombre === 'Doble') {
+          score += 20;
+          razones.push('Escritorio ergonómico y ambiente silencioso de trabajo.');
+        }
+        if (hab.servicios.some((s) => s.toLowerCase().includes('wi-fi') || s.toLowerCase().includes('wifi'))) {
+          score += 10;
+          razones.push('Conexión Wi-Fi de 500 Mbps de alta estabilidad.');
+        }
+      } else if (motivo_viaje === 'familiar') {
+        if (tipo.nombre === 'Familiar') {
+          score += 25;
+          razones.push('Suite espaciosa de dos ambientes adaptada para familias.');
+        } else if (tipo.nombre === 'Triple') {
+          score += 15;
+          razones.push('Distribución cómoda con camas individuales independientes.');
+        }
+      } else if (motivo_viaje === 'relax') {
+        if (hab.piso === 1 || tipo.nombre === 'Suite') {
+          score += 15;
+          razones.push('Ubicación privilegiada con acceso inmediato a jardines y solárium.');
+        }
+      }
+
+      // Budget check
+      if (presupuesto_max) {
+        if (tipo.precio_base <= presupuesto_max) {
+          score += 12;
+          razones.push(`Tarifa base dentro de tu presupuesto esperado.`);
+        } else {
+          score -= 15;
+        }
+      }
+
+      // Custom preferences
+      preferencias.forEach((pref) => {
+        const pLower = pref.toLowerCase();
+        const matchesService = hab.servicios.some((s) => s.toLowerCase().includes(pLower));
+        const matchesDesc = hab.descripcion.toLowerCase().includes(pLower);
+        if (matchesService || matchesDesc) {
+          score += 7;
+          razones.push(`Incluye tu preferencia de "${pref}".`);
+        }
+      });
+
+      // Rating score
+      const rating = getRatingHabitacion(hab.id_habitacion);
+      if (rating.promedio >= 4.8) {
+        score += 5;
+        razones.push(`Valorada con ${rating.promedio} estrellas por huéspedes.`);
+      }
+
+      const afinidad = Math.min(99, Math.max(50, score));
+
+      let destacado = 'Opción sugerida';
+      if (afinidad >= 90) destacado = 'Coincidencia Perfecta (Match 90%+)';
+      else if (afinidad >= 80) destacado = 'Altamente Recomendada';
+
+      return {
+        habitacion: hab,
+        puntuacion_afinidad: afinidad,
+        razones: razones.slice(0, 3),
+        destacado,
+      };
+    }).filter(Boolean);
+
+    return results.sort((a, b) => b.puntuacion_afinidad - a.puntuacion_afinidad);
+  };
+
+  // Feature 2: FAQ Virtual Concierge Chatbot
+  const consultarConciergeChat = async (mensajeUsuario: string): Promise<MensajeChat> => {
+    const raw = mensajeUsuario.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // 1. Room recommendation trigger
+    if (
+      raw.includes('recomiend') ||
+      raw.includes('sugier') ||
+      raw.includes('cual habitacion') ||
+      raw.includes('pareja') ||
+      raw.includes('familia') ||
+      raw.includes('suite')
+    ) {
+      let motivo: 'romantico' | 'negocios' | 'familiar' | 'relax' = 'relax';
+      let hues = 2;
+      if (raw.includes('pareja') || raw.includes('romanti') || raw.includes('novi') || raw.includes('espos')) {
+        motivo = 'romantico';
+      } else if (raw.includes('familia') || raw.includes('hijos') || raw.includes('ninos')) {
+        motivo = 'familiar';
+        hues = 4;
+      } else if (raw.includes('negocio') || raw.includes('trabajo') || raw.includes('solo')) {
+        motivo = 'negocios';
+        hues = 1;
+      }
+
+      const recs = recomendarHabitacionesIA({
+        motivo_viaje: motivo,
+        huespedes: hues,
+        preferencias: ['balcón', 'desayuno'],
+      });
+
+      const top = recs[0];
+      return {
+        id: `chat-${Date.now()}`,
+        emisor: 'asistente',
+        texto: `Para tu viaje ${motivo === 'romantico' ? 'romántico en pareja' : motivo === 'familiar' ? 'en familia' : 'de descanso'}, te recomiendo la Habitación ${top.habitacion.numero} (${top.habitacion.descripcion.slice(0, 85)}...). Cuenta con un ${top.puntuacion_afinidad}% de afinidad con tus criterios.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sugerencia_habitacion: top.habitacion,
+      };
+    }
+
+    // 2. Keyword match in FAQ_ITEMS
+    for (const faq of FAQ_ITEMS) {
+      const match = faq.palabrasClave.some((kw) => raw.includes(kw));
+      if (match) {
+        return {
+          id: `chat-${Date.now()}`,
+          emisor: 'asistente',
+          texto: faq.respuesta,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+      }
+    }
+
+    // 3. Fallback answer
+    return {
+      id: `chat-${Date.now()}`,
+      emisor: 'asistente',
+      texto: `En Alborada Hotel Boutique estamos para servirte. Puedes preguntarme sobre Check-in (3:00 PM), Check-out (12:00 PM), políticas de cancelación (48 horas), desayuno buffet incluido, piscina climatizada, cupones promocionales o solicitarme una recomendación de habitación a tu medida.`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+  };
+
+  // Feature 3: Basic Occupancy Forecasting Engine
+  const calcularPrediccionOcupacion = (diasFuturos: number = 30): PrediccionOcupacionDia[] => {
+    const list: PrediccionOcupacionDia[] = [];
+    const diasSemanaNombres = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const totalHabs = habitaciones.length || 30;
+    const baseDate = new Date(2026, 11, 15); // Dec 15, 2026
+
+    for (let i = 0; i < diasFuturos; i++) {
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayOfWeek = d.getDay();
+
+      // Confirmed active reservations for that day
+      const realOccupied = reservas.filter((r) => {
+        if (r.estado === 'CANCELADA') return false;
+        return dateStr >= r.fecha_entrada && dateStr < r.fecha_salida;
+      }).length;
+
+      const realRate = Math.min(100, Math.round((realOccupied / totalHabs) * 100));
+
+      // Day of week weighting
+      let dayMultiplier = 0.88;
+      if (dayOfWeek === 5 || dayOfWeek === 6) {
+        dayMultiplier = 1.30;
+      } else if (dayOfWeek === 0) {
+        dayMultiplier = 0.95;
+      } else if (dayOfWeek === 4) {
+        dayMultiplier = 1.05;
+      }
+
+      // Holiday seasonal factor
+      const dayOfMonth = d.getDate();
+      const month = d.getMonth();
+      let holidayMultiplier = 1.0;
+      if (month === 11 && dayOfMonth >= 22) {
+        holidayMultiplier = 1.35;
+      } else if (month === 0 && dayOfMonth <= 6) {
+        holidayMultiplier = 1.25;
+      }
+
+      const estimatedRate = Math.min(
+        100,
+        Math.max(realRate, Math.round((realRate + 32) * dayMultiplier * holidayMultiplier * 0.68))
+      );
+
+      let demandaNivel: 'BAJA' | 'MEDIA' | 'ALTA' | 'MUY_ALTA' = 'MEDIA';
+      let tarifaRecomendada = 220000;
+      if (estimatedRate >= 85) {
+        demandaNivel = 'MUY_ALTA';
+        tarifaRecomendada = 265000;
+      } else if (estimatedRate >= 65) {
+        demandaNivel = 'ALTA';
+        tarifaRecomendada = 240000;
+      } else if (estimatedRate >= 40) {
+        demandaNivel = 'MEDIA';
+        tarifaRecomendada = 220000;
+      } else {
+        demandaNivel = 'BAJA';
+        tarifaRecomendada = 195000;
+      }
+
+      list.push({
+        fecha: dateStr,
+        diaSemana: diasSemanaNombres[dayOfWeek],
+        ocupacionReal: realRate,
+        ocupacionProyectada: estimatedRate,
+        demandaNivel,
+        tarifaRecomendada,
+      });
+    }
+
+    return list;
+  };
+
   // HU05 & RN02: Create Reservation
   const createReserva = (data: {
     id_habitacion: number;
@@ -455,6 +743,32 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setReservas((prev) => [nuevaReserva, ...prev]);
 
+    // Automated Notifications Dispatch
+    const notifCli: Notificacion = {
+      id_notificacion: `notif-${Date.now()}-c`,
+      tipo: 'CONFIRMACION',
+      titulo: `Reserva creada: ${codigo}`,
+      mensaje: `Tu estadía en Habitación ${hab.numero} (${tipo.nombre}) del ${fecha_entrada} al ${fecha_salida} está registrada.`,
+      fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      leida: false,
+      destinatario_rol: 'CLIENTE',
+      destinatario_correo: targetCliente.correo,
+      enlace_vista: 'mis-reservas',
+    };
+
+    const notifAdm: Notificacion = {
+      id_notificacion: `notif-${Date.now()}-a`,
+      tipo: 'SISTEMA',
+      titulo: `Nueva reserva en sistema: ${codigo}`,
+      mensaje: `Huésped ${targetCliente.nombre} ${targetCliente.apellido} reservó la Habitación ${hab.numero}.`,
+      fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      leida: false,
+      destinatario_rol: 'ADMINISTRADOR',
+      enlace_vista: 'admin-reservas',
+    };
+
+    setNotificaciones((prev) => [notifCli, notifAdm, ...prev]);
+
     return { success: true, reserva: nuevaReserva };
   };
 
@@ -490,6 +804,19 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setReservas((prev) =>
       prev.map((r) => (r.id_reserva === idReserva ? { ...r, estado: 'CANCELADA' } : r))
     );
+
+    // Automated Cancellation Notification
+    const notifCanc: Notificacion = {
+      id_notificacion: `notif-${Date.now()}-canc`,
+      tipo: 'SISTEMA',
+      titulo: `Reserva cancelada: ${reserva.codigo}`,
+      mensaje: `La reserva de la Habitación ${reserva.habitacion_numero} (${reserva.fecha_entrada} al ${reserva.fecha_salida}) ha sido cancelada.`,
+      fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      leida: false,
+      destinatario_rol: isClientAction ? 'ADMINISTRADOR' : 'CLIENTE',
+      enlace_vista: isClientAction ? 'admin-reservas' : 'mis-reservas',
+    };
+    setNotificaciones((prev) => [notifCanc, ...prev]);
 
     return { success: true };
   };
@@ -612,6 +939,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         reservas,
         cupones,
         resenas,
+        notificaciones,
         currentRole,
         currentUser,
         currentCliente,
@@ -620,6 +948,12 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         switchRole,
         loginAs,
         logout,
+        marcarNotificacionLeida,
+        marcarTodasNotificacionesLeidas,
+        agregarNotificacion,
+        recomendarHabitacionesIA,
+        consultarConciergeChat,
+        calcularPrediccionOcupacion,
         checkOverlap,
         calculateNights,
         calculateTotal,

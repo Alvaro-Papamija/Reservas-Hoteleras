@@ -1,4 +1,4 @@
-import { TipoHabitacion, Habitacion, Cliente, Usuario, Reserva, Cupon, Resena } from '../types/hotel';
+import { TipoHabitacion, Habitacion, Cliente, Usuario, Reserva, Cupon, Resena, Notificacion } from '../types/hotel';
 
 export const INITIAL_TIPOS: TipoHabitacion[] = [
   {
@@ -617,5 +617,117 @@ export const INITIAL_RESENAS: Resena[] = [
     calificacion: 5,
     comentario: 'Hermosa decoración tradicional con todas las comodidades modernas. Dormimos delicioso y el personal fue muy cálido.',
     fecha: '2026-11-05',
+  },
+];
+
+export const INITIAL_NOTIFICACIONES: Notificacion[] = [
+  {
+    id_notificacion: 'notif-1',
+    tipo: 'RECORDATORIO',
+    titulo: 'Check-in próximo de tu estancia',
+    mensaje: 'Tu reserva RH-20261215-0042 en Habitación 103 está programada para el 15 de diciembre a partir de las 3:00 PM.',
+    fecha: '2026-12-14 09:00',
+    leida: false,
+    destinatario_rol: 'CLIENTE',
+    destinatario_correo: 'carlos.mendoza@email.com',
+    enlace_vista: 'mis-reservas',
+  },
+  {
+    id_notificacion: 'notif-2',
+    tipo: 'PROMOCION',
+    titulo: 'Nuevo cupón del 20% disponible',
+    mensaje: 'Aplica el código BIENVENIDA20 en tu próxima reserva de 2 o más noches y disfruta de una experiencia boutique inigualable.',
+    fecha: '2026-12-10 14:30',
+    leida: false,
+    destinatario_rol: 'TODOS',
+    enlace_vista: 'disponibilidad',
+  },
+  {
+    id_notificacion: 'notif-3',
+    tipo: 'MANTENIMIENTO',
+    titulo: 'Mantenimiento preventivo Piso 2',
+    mensaje: 'La habitación 205 ha sido programada para revisión técnica y mantenimiento de cerraduras electrónicas.',
+    fecha: '2026-12-11 08:00',
+    leida: false,
+    destinatario_rol: 'ADMINISTRADOR',
+    enlace_vista: 'admin-habitaciones',
+  },
+  {
+    id_notificacion: 'notif-4',
+    tipo: 'CONFIRMACION',
+    titulo: 'Reserva confirmada con éxito',
+    mensaje: 'La reserva RH-20261218-0043 para Habitación 201 ha sido procesada satisfactoriamente con comprobante PDF listo para descarga.',
+    fecha: '2026-12-08 16:15',
+    leida: true,
+    destinatario_rol: 'CLIENTE',
+    destinatario_correo: 'mariana.valencia@email.com',
+    enlace_vista: 'mis-reservas',
+  },
+];
+
+export interface FAQItem {
+  id: string;
+  pregunta: string;
+  respuesta: string;
+  categoria: 'horarios' | 'servicios' | 'reservas' | 'pagos';
+  palabrasClave: string[];
+}
+
+export const FAQ_ITEMS: FAQItem[] = [
+  {
+    id: 'faq-1',
+    pregunta: '¿Cuáles son los horarios de Check-in y Check-out?',
+    respuesta: 'El Check-in oficial es a partir de las 3:00 PM y el Check-out se realiza hasta las 12:00 PM (mediodía). Si necesitas Early Check-in o Late Check-out, puedes solicitarlo previamente sujeto a disponibilidad de la habitación.',
+    categoria: 'horarios',
+    palabrasClave: ['checkin', 'checkout', 'horario', 'hora', 'llegada', 'salida', 'entrar', 'salir'],
+  },
+  {
+    id: 'faq-2',
+    pregunta: '¿El desayuno está incluido en la tarifa?',
+    respuesta: 'Sí, todas las tarifas de Alborada Hotel Boutique incluyen desayuno artesanal gourmet servido diariamente entre 7:00 AM y 10:30 AM en nuestro patio colonial de los jazmines o con servicio a la suite.',
+    categoria: 'servicios',
+    palabrasClave: ['desayuno', 'comida', 'incluido', 'buffet', 'restaurante', 'alimentacion', 'cafe'],
+  },
+  {
+    id: 'faq-3',
+    pregunta: '¿Cuál es la política de cancelación de reservas?',
+    respuesta: 'Puedes cancelar tu reserva de forma totalmente gratuita y sin penalización hasta 48 horas antes de la fecha de entrada (check-in a las 3:00 PM). Las cancelaciones con menos de 48 horas de anticipación no permiten reembolso.',
+    categoria: 'reservas',
+    palabrasClave: ['cancelar', 'cancelacion', 'politica', 'anular', 'devolucion', 'reembolso', '48 horas'],
+  },
+  {
+    id: 'faq-4',
+    pregunta: '¿Tienen parqueadero privado gratuito?',
+    respuesta: 'Sí, contamos con estacionamiento privado, cubierto y vigilado las 24 horas del día sin ningún costo adicional para todos nuestros huéspedes alojados.',
+    categoria: 'servicios',
+    palabrasClave: ['parqueadero', 'estacionamiento', 'carro', 'vehiculo', 'parking', 'cochera'],
+  },
+  {
+    id: 'faq-5',
+    pregunta: '¿Cómo puedo aplicar un cupón de descuento promocional?',
+    respuesta: 'Durante el paso final de confirmación de tu reserva, ingresa tu código promocional (por ejemplo ALBORADA10 para 10% OFF o BIENVENIDA20 para 20% OFF en estancias de 2+ noches) en la casilla "Código Promocional" y presiona "Aplicar". El descuento se deducirá al instante.',
+    categoria: 'pagos',
+    palabrasClave: ['cupon', 'descuento', 'promocion', 'codigo', 'rebaja', 'oferta'],
+  },
+  {
+    id: 'faq-6',
+    pregunta: '¿El hotel cuenta con piscina y zonas húmedas?',
+    respuesta: 'Sí, disponemos de una piscina climatizada con solárium de mármol travertino, jacuzzi hidromasaje y zona de descanso rodeada de jardines nativos, abierta de 8:00 AM a 9:00 PM.',
+    categoria: 'servicios',
+    palabrasClave: ['piscina', 'jacuzzi', 'humedas', 'solarium', 'nadar', 'toallas', 'spa'],
+  },
+  {
+    id: 'faq-7',
+    pregunta: '¿Admiten mascotas (Pet Friendly)?',
+    respuesta: 'Aceptamos mascotas de razas pequeñas y medianas (hasta 12 kg) en habitaciones designadas del primer piso con terraza, previa notificación al momento de reservar. Aplica un kit de bienvenida de cortesía.',
+    categoria: 'servicios',
+    palabrasClave: ['mascota', 'pet', 'perro', 'gato', 'animales', 'friendly'],
+  },
+  {
+    id: 'faq-8',
+    pregunta: '¿Cómo obtengo mi comprobante oficial de reserva?',
+    respuesta: 'Inmediatamente después de confirmar tu estadía se genera tu código único RH y puedes descargar tu comprobante en formato PDF imprimible desde la sección "Mis Reservas" o recibirlo por correo electrónico.',
+    categoria: 'reservas',
+    palabrasClave: ['comprobante', 'pdf', 'factura', 'recibo', 'descargar', 'codigo'],
   },
 ];

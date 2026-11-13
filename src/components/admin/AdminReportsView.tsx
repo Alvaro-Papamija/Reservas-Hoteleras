@@ -14,10 +14,13 @@ import {
   Star,
   Award,
   Percent,
+  Sparkles,
+  Activity,
+  Zap,
 } from 'lucide-react';
 
 export const AdminReportsView: React.FC = () => {
-  const { habitaciones, tipos, reservas, cupones, resenas } = useHotel();
+  const { habitaciones, tipos, reservas, cupones, resenas, calcularPrediccionOcupacion } = useHotel();
 
   // Metrics by Type
   const revenueByType = tipos.map((t) => {
@@ -121,6 +124,11 @@ export const AdminReportsView: React.FC = () => {
       distribution: dist,
     };
   }, [resenas]);
+
+  // Predictive Occupancy Forecast (Next 21 days)
+  const predicciones = useMemo(() => {
+    return calcularPrediccionOcupacion(21);
+  }, [calcularPrediccionOcupacion, reservas, habitaciones]);
 
   const handlePrintReport = () => {
     window.print();
@@ -465,6 +473,102 @@ export const AdminReportsView: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* Feature 3: Predicción Básica de Ocupación con IA / Modelo de Demanda */}
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-700" />
+              <h2 className="font-display font-bold text-lg text-stone-900">
+                Predicción Básica de Demanda y Ocupación (Próximos 21 Días)
+              </h2>
+            </div>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Modelo predictivo basado en reservas confirmadas, estacionalidad decembrina y factor multiplicador de fin de semana.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs font-semibold">
+            <span className="px-2.5 py-1 rounded-md bg-stone-100 text-stone-700 border border-stone-200">
+              Real Confirmado
+            </span>
+            <span className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+              Proyección IA
+            </span>
+          </div>
+        </div>
+
+        {/* Prediction Chart Bars */}
+        <div className="pt-2">
+          <div className="grid grid-cols-7 sm:grid-cols-21 gap-1.5 items-end h-60 pb-3 border-b border-stone-100">
+            {predicciones.map((p) => {
+              const isWeekend = p.diaSemana === 'Vie' || p.diaSemana === 'Sáb';
+              return (
+                <div key={p.fecha} className="flex flex-col items-center h-full justify-end group">
+                  {/* Tooltip percentage */}
+                  <span className="text-[9px] font-mono-numbers font-bold text-amber-900 opacity-90 group-hover:scale-110 transition-transform mb-1">
+                    {p.ocupacionProyectada}%
+                  </span>
+
+                  {/* Dual bar: real on bottom, projected fill */}
+                  <div className="w-full bg-stone-100 rounded-t-md h-40 flex flex-col justify-end p-0.5 overflow-hidden relative">
+                    {/* Projected demand fill */}
+                    <div
+                      className={`w-full rounded-t-sm transition-all ${
+                        p.demandaNivel === 'MUY_ALTA'
+                          ? 'bg-amber-600'
+                          : p.demandaNivel === 'ALTA'
+                          ? 'bg-amber-500'
+                          : 'bg-stone-400'
+                      }`}
+                      style={{ height: `${Math.max(10, p.ocupacionProyectada)}%` }}
+                    />
+                  </div>
+
+                  {/* Date label */}
+                  <span className={`text-[9px] mt-1 font-semibold ${isWeekend ? 'text-amber-800' : 'text-stone-500'}`}>
+                    {p.diaSemana}
+                  </span>
+                  <span className="text-[8px] text-stone-400 font-mono-numbers">
+                    {p.fecha.split('-')[2]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Predictive Insights and Dynamic Pricing Advice */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+            <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+              Pico de Demanda Navideña
+            </span>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Ocupación proyectada &gt; 85% entre el 23 y 31 de diciembre. Se proyecta ocupación total en suites con terraza.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
+            <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider block">
+              Tarifa Dinámica Recomendada
+            </span>
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              Mantener tarifa preferencial de temporada ($240.000 - $265.000 COP) los fines de semana para optimizar el RevPAR.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+            <span className="text-[11px] font-bold text-stone-900 uppercase tracking-wider block">
+              Estrategia de Cupones
+            </span>
+            <p className="text-xs text-stone-700 leading-relaxed">
+              Restringir cupón `BIENVENIDA20` a estancias de domingo a jueves para incentivar reservas en días de baja demanda.
+            </p>
           </div>
         </div>
       </div>

@@ -99,3 +99,48 @@ export interface DisponibilidadQuery {
   huespedes: number;
   id_tipo?: number;
 }
+
+export type TipoNotificacion = 'CONFIRMACION' | 'RECORDATORIO' | 'PROMOCION' | 'MANTENIMIENTO' | 'SISTEMA';
+
+export interface Notificacion {
+  id_notificacion: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  fecha: string;
+  leida: boolean;
+  destinatario_rol?: 'TODOS' | 'CLIENTE' | 'ADMINISTRADOR';
+  destinatario_correo?: string;
+  enlace_vista?: 'inicio' | 'habitaciones' | 'disponibilidad' | 'mis-reservas' | 'admin-dashboard' | 'admin-habitaciones' | 'admin-reservas' | 'admin-clientes' | 'admin-calendario' | 'admin-reportes';
+}
+
+export interface RecomendacionIAQuery {
+  motivo_viaje: 'romantico' | 'negocios' | 'familiar' | 'relax';
+  presupuesto_max?: number;
+  huespedes: number;
+  preferencias: string[];
+}
+
+export interface RecomendacionIAResult {
+  habitacion: Habitacion;
+  puntuacion_afinidad: number;
+  razones: string[];
+  destacado: string;
+}
+
+export interface MensajeChat {
+  id: string;
+  emisor: 'usuario' | 'asistente';
+  texto: string;
+  timestamp: string;
+  sugerencia_habitacion?: Habitacion;
+}
+
+export interface PrediccionOcupacionDia {
+  fecha: string;
+  diaSemana: string;
+  ocupacionReal: number;
+  ocupacionProyectada: number;
+  demandaNivel: 'BAJA' | 'MEDIA' | 'ALTA' | 'MUY_ALTA';
+  tarifaRecomendada: number;
+}

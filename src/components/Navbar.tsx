@@ -11,6 +11,7 @@ import {
   X,
   Compass,
 } from 'lucide-react';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface NavbarProps {
   onOpenAuth: () => void;
@@ -197,6 +198,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                 Nueva Reserva
               </button>
             )}
+
+            {/* Automated Notifications Center */}
+            <NotificationsDropdown />
 
             {/* Profile / Switcher button */}
             <button

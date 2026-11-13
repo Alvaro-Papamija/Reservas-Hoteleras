@@ -9,6 +9,8 @@ import { RoomDetailModal } from './components/RoomDetailModal';
 import { BookingModal } from './components/BookingModal';
 import { BookingConfirmationModal } from './components/BookingConfirmationModal';
 import { AuthModal } from './components/AuthModal';
+import { AIRecommendationModal } from './components/AIRecommendationModal';
+import { ChatbotConcierge } from './components/ChatbotConcierge';
 import { Footer } from './components/Footer';
 
 // Admin Components
@@ -52,6 +54,7 @@ const MainApp: React.FC = () => {
   const [bookingModalHab, setBookingModalHab] = useState<Habitacion | null>(null);
   const [confirmedReserva, setConfirmedReserva] = useState<Reserva | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Handlers
   const handleHeroSearch = (params: { entrada: string; salida: string; huespedes: number; tipoId?: number }) => {
@@ -148,6 +151,7 @@ const MainApp: React.FC = () => {
             <CatalogSection
               onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
               onOpenDetails={handleOpenRoomDetails}
+              onOpenAIRecommendation={() => setIsAIModalOpen(true)}
             />
 
             {/* Luxury Story Section with Travertine Textures */}
@@ -202,6 +206,7 @@ const MainApp: React.FC = () => {
             <CatalogSection
               onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
               onOpenDetails={handleOpenRoomDetails}
+              onOpenAIRecommendation={() => setIsAIModalOpen(true)}
             />
           </div>
         )}
@@ -274,6 +279,20 @@ const MainApp: React.FC = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* AI Recommendation Modal */}
+      <AIRecommendationModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
+        onOpenDetails={handleOpenRoomDetails}
+      />
+
+      {/* 24/7 Virtual Concierge Chatbot */}
+      <ChatbotConcierge
+        onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
+        onOpenDetails={handleOpenRoomDetails}
       />
 
       {/* Footer */}

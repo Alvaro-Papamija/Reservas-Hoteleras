@@ -18,11 +18,13 @@ import { motion } from 'motion/react';
 interface CatalogSectionProps {
   onSelectHabitacion: (hab: Habitacion) => void;
   onOpenDetails: (hab: Habitacion) => void;
+  onOpenAIRecommendation?: () => void;
 }
 
 export const CatalogSection: React.FC<CatalogSectionProps> = ({
   onSelectHabitacion,
   onOpenDetails,
+  onOpenAIRecommendation,
 }) => {
   const { habitaciones, tipos, getRatingHabitacion } = useHotel();
 
@@ -66,9 +68,20 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
           </p>
         </div>
 
-        {/* Counter */}
-        <div className="text-xs text-stone-500 font-mono-numbers text-right">
-          Mostrando <span className="font-bold text-stone-900">{filteredRooms.length}</span> de 30 estancias
+        {/* Counter and AI Recommendation Trigger */}
+        <div className="flex flex-col sm:items-end gap-2 shrink-0">
+          {onOpenAIRecommendation && (
+            <button
+              onClick={onOpenAIRecommendation}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold shadow-xs transition-all self-start sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+              <span>Recomendador IA</span>
+            </button>
+          )}
+          <div className="text-xs text-stone-500 font-mono-numbers">
+            Mostrando <span className="font-bold text-stone-900">{filteredRooms.length}</span> de 30 estancias
+          </div>
         </div>
       </div>
 

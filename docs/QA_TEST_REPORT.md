@@ -2,7 +2,7 @@
 
 **Hotel:** Alborada Hotel Boutique  
 **Responsable:** Alvaro Andrés  
-**Versión del informe:** 2.0 (Noviembre de 2026)  
+**Versión del informe:** 3.0 (Noviembre de 2026)  
 **Entorno de ejecución:** `node v26.13.1`, `vitest v5.1.0`  
 **Ramas auditadas:** `dev`, `qa`, `main`
 
@@ -12,21 +12,22 @@
 
 El sistema de reservas hoteleras cuenta con una suite completa de pruebas unitarias y de integración que validan el 100% de las reglas de negocio descritas en la arquitectura:
 
-- **Total de pruebas ejecutadas:** 23 tests
-- **Pruebas superadas (PASS):** 23 (100%)
+- **Total de pruebas ejecutadas:** 31 tests
+- **Pruebas superadas (PASS):** 31 (100%)
 - **Pruebas fallidas (FAIL):** 0 (0%)
-- **Suites de prueba:** 3 archivos (`hotelBusinessLogic.test.ts`, `featuresPhase2.test.ts`, `featuresPhase3.test.ts`)
+- **Suites de prueba:** 4 archivos (`hotelBusinessLogic.test.ts`, `featuresPhase2.test.ts`, `featuresPhase3.test.ts`, `featuresPhase4.test.ts`)
 
 ```bash
 > npm test
 
- ✓ src/__tests__/featuresPhase3.test.ts (6 tests) 11ms
- ✓ src/__tests__/hotelBusinessLogic.test.ts (12 tests) 135ms
- ✓ src/__tests__/featuresPhase2.test.ts (5 tests) 47ms
+ ✓ src/__tests__/featuresPhase4.test.ts (8 tests) 8ms
+ ✓ src/__tests__/featuresPhase3.test.ts (6 tests) 9ms
+ ✓ src/__tests__/hotelBusinessLogic.test.ts (12 tests) 114ms
+ ✓ src/__tests__/featuresPhase2.test.ts (5 tests) 49ms
 
- Test Files  3 passed (3)
-      Tests  23 passed (23)
-   Duration  938ms
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+   Duration  736ms
 ```
 
 ---
@@ -79,6 +80,15 @@ El sistema de reservas hoteleras cuenta con una suite completa de pruebas unitar
 | `TC-P3-05` | Gráficas de ocupación diaria | Curva y barras de porcentaje diario de 14 días | Visualización en tiempo real | **PASS** |
 | `TC-P3-06` | Calendario visual de reservas (Gantt) | Vista cronológica mensual por habitación y días | Bloques de reserva interactivos | **PASS** |
 
+### 2.7 Fase 4 - IA, Chatbot, Predicción y Notificaciones
+| ID | Caso de Prueba | Característica evaluada | Comportamiento | Resultado |
+|---|---|---|---|:---:|
+| `TC-P4-01` | Motor de recomendación con IA | Cálculo de afinidad por motivo de viaje y presupuesto | Clasificación ordenada por porcentaje | **PASS** |
+| `TC-P4-02` | Chatbot FAQ - Horarios y políticas | Respuestas para Check-in (3PM) y cancelación (48h) | Respuesta instantánea verificada | **PASS** |
+| `TC-P4-03` | Chatbot FAQ - Servicios y amenidades | Detección de palabras clave (parqueadero, piscina) | Respuesta contextual precisa | **PASS** |
+| `TC-P4-04` | Predicción básica de ocupación | Proyección a 21 días con factores de estacionalidad | Cálculo de demanda y tarifa dinámica | **PASS** |
+| `TC-P4-05` | Centro de notificaciones automáticas | Alertas automáticas ante reservas y cancelaciones | Gestión de estado leído / no leído | **PASS** |
+
 ---
 
 ## 3. Auditoría de Flujos en Interfaz de Usuario (http://localhost:3000)
@@ -86,11 +96,14 @@ El sistema de reservas hoteleras cuenta con una suite completa de pruebas unitar
 | Módulo | Componentes Auditados | Estado |
 |---|---|:---:|
 | **Landing & Hero** | `HeroSection.tsx`, Barra de búsqueda rápida de fechas y huéspedes | **PASS** |
-| **Catálogo** | `CatalogSection.tsx`, Tarjetas de 30 habitaciones, fotos, badges de estrellas y tarifas | **PASS** |
+| **Catálogo** | `CatalogSection.tsx`, Tarjetas de 30 habitaciones con recomendador IA integrado | **PASS** |
+| **Recomendador IA** | `AIRecommendationModal.tsx`, Cuestionario por motivo, huéspedes y presupuesto | **PASS** |
+| **Concierge Chatbot** | `ChatbotConcierge.tsx`, Asistente flotante 24/7 con preguntas frecuentes | **PASS** |
+| **Notificaciones** | `NotificationsDropdown.tsx`, Campana con badge en navbar y acciones rápidas | **PASS** |
 | **Disponibilidad** | `DisponibilidadView.tsx`, Filtros dinámicos con exclusión de solapamientos | **PASS** |
 | **Reserva** | `BookingModal.tsx`, Cálculo en vivo, integración de cupones de descuento | **PASS** |
 | **Confirmación** | `BookingConfirmationModal.tsx`, Generación de código único `ALB-XXXXX` | **PASS** |
 | **Mis Reservas** | `MyReservationsView.tsx`, Comprobante PDF, ver correo, calificar estancia | **PASS** |
 | **Calendario Visual** | `AdminCalendarView.tsx`, Matriz de ocupación mensual estilo Gantt | **PASS** |
-| **Reportes & Gráficas** | `AdminReportsView.tsx`, Curva de ocupación diaria, desglose por piso y cupones | **PASS** |
-| **Admin Dashboard** | `AdminDashboard.tsx`, KPIs de ocupación en tiempo real y accesos rápidos | **PASS** |
+| **Reportes & Predicción** | `AdminReportsView.tsx`, Curva de ocupación y predicción a 21 días con IA | **PASS** |
+| **Admin Dashboard** | `AdminDashboard.tsx`, KPIs de ocupación en tiempo real y accesos directos | **PASS** |
