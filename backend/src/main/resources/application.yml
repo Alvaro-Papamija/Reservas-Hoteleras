@@ -49,6 +49,16 @@ spring:
         jdbc:
           time_zone: UTC
 
+# Parámetros de Autenticación, JWT y Seguridad OWASP
+app:
+  jwt:
+    secret: ${JWT_SECRET:HotelAlboradaSuperSecureSecretKey2026WithSufficientEntropyAndLengthForHMACSHA256}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000} # 1 hora
+  security:
+    rate-limit:
+      max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
+      lockout-duration-minutes: ${RATE_LIMIT_LOCKOUT_MINUTES:15}
+
 # Configuración de Logging
 logging:
   level:

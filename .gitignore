@@ -9,3 +9,4 @@ backend/target/
 *.pdf
 .env*
 !.env.example
+.vscode/

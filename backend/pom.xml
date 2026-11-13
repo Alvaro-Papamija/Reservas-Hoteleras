@@ -49,6 +49,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Seguridad empresarial: Autenticación, Hashing BCrypt y Filtros -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- Pruebas unitarias y de integración del ecosistema Spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

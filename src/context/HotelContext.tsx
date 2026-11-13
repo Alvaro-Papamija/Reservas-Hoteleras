@@ -28,6 +28,7 @@ import {
   INITIAL_NOTIFICACIONES,
   FAQ_ITEMS,
 } from '../data/mockData';
+import { AuthService, AuthSessionResponse } from '../utils/authService';
 
 interface BookingValidationResult {
   valid: boolean;
@@ -54,6 +55,8 @@ interface HotelContextType {
   setActiveView: (view: any) => void;
   switchRole: (role: RolUsuario) => void;
   loginAs: (email: string) => boolean;
+  login: (email: string, pass: string, persist?: boolean) => Promise<AuthSessionResponse>;
+  register: (nombre: string, email: string, pass: string) => Promise<AuthSessionResponse>;
   logout: () => void;
   
   // Notifications actions
@@ -237,7 +240,70 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return false;
   };
 
+  const login = async (email: string, pass: string, persist: boolean = false): Promise<AuthSessionResponse> => {
+    const res = await AuthService.login(email, pass, persist);
+    if (res.success && res.user) {
+      const userObj: Usuario = {
+        id_usuario: res.user.id_usuario,
+        nombre: res.user.nombre,
+        correo: res.user.correo,
+        rol: res.user.rol as RolUsuario,
+        estado: res.user.estado,
+      };
+      setCurrentUser(userObj);
+      setCurrentRole(userObj.rol);
+      setIsAuthenticated(true);
+      if (userObj.rol === 'ADMINISTRADOR') {
+        setActiveView('admin-dashboard');
+      }
+    }
+    return res;
+  };
+
+  const register = async (nombre: string, email: string, pass: string): Promise<AuthSessionResponse> => {
+    const res = await AuthService.register(nombre, email, pass);
+    if (res.success && res.user) {
+      const userObj: Usuario = {
+        id_usuario: res.user.id_usuario,
+        nombre: res.user.nombre,
+        correo: res.user.correo,
+        rol: res.user.rol as RolUsuario,
+        estado: res.user.estado,
+      };
+      // Registrar también en la lista de clientes si no existe
+      setClientes((prev) => {
+        if (!prev.some((c) => c.correo.toLowerCase() === userObj.correo.toLowerCase())) {
+          const names = userObj.nombre.trim().split(' ');
+          const primerNombre = names[0] || 'Huésped';
+          const apellidos = names.slice(1).join(' ') || '';
+          return [
+            ...prev,
+            {
+              id_cliente: prev.length + 1,
+              id_usuario: userObj.id_usuario,
+              nombre: primerNombre,
+              apellido: apellidos,
+              correo: userObj.correo,
+              telefono: '+57 300 000 0000',
+              documento: 'CC ' + Math.floor(1000000000 + Math.random() * 900000000),
+              direccion: 'Colombia',
+              fecha_registro: new Date().toISOString().split('T')[0],
+            },
+          ];
+        }
+        return prev;
+      });
+
+      setCurrentUser(userObj);
+      setCurrentRole(userObj.rol);
+      setIsAuthenticated(true);
+      setActiveView('inicio');
+    }
+    return res;
+  };
+
   const logout = () => {
+    AuthService.logout();
     setIsAuthenticated(false);
     setCurrentRole('CLIENTE');
     setCurrentUser({
@@ -1021,6 +1087,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActiveView,
         switchRole,
         loginAs,
+        login,
+        register,
         logout,
         marcarNotificacionLeida,
         marcarTodasNotificacionesLeidas,
