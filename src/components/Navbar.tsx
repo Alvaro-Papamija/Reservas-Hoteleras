@@ -38,27 +38,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
   return (
     <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-stone-200/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-8">
+        <div className="flex items-center justify-between h-20 gap-3 xl:gap-6">
           {/* Zone 1: Brand Wordmark (1 element, single line) */}
           <button
             onClick={() => setActiveView(currentRole === 'ADMINISTRADOR' ? 'admin-dashboard' : 'inicio')}
-            className="flex items-center gap-2.5 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 rounded-lg shrink-0"
+            className="flex items-center gap-2 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 rounded-lg shrink-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-700 text-amber-50 flex items-center justify-center shadow-sm group-hover:bg-amber-800 transition-colors">
-              <Sparkles className="w-5 h-5 text-amber-200" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-700 text-amber-50 flex items-center justify-center shadow-sm group-hover:bg-amber-800 transition-colors">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-200" />
             </div>
             <div className="flex flex-col">
-              <span className="font-display text-xl font-bold tracking-tight text-stone-900 leading-tight">
+              <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-stone-900 leading-tight">
                 Alborada
               </span>
-              <span className="text-[11px] font-medium tracking-widest uppercase text-amber-800/80">
+              <span className="text-[10px] sm:text-[11px] font-medium tracking-widest uppercase text-amber-800/80">
                 Hotel Boutique
               </span>
             </div>
           </button>
 
-          {/* Zone 2: Navigation Links (single line, 4-5 links) */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-stone-600">
+          {/* Zone 2: Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-5 text-xs xl:text-sm font-medium text-stone-600">
             {currentRole === 'CLIENTE' ? (
               <>
                 <button
@@ -115,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                     activeView === 'admin-habitaciones' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
                   }`}
                 >
-                  Gestión Habitaciones
+                  <span className="hidden 2xl:inline">Gestión </span>Habitaciones
                 </button>
                 <button
                   onClick={() => setActiveView('admin-reservas')}
@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                     activeView === 'admin-reservas' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
                   }`}
                 >
-                  Reservas del Hotel
+                  Reservas<span className="hidden 2xl:inline"> del Hotel</span>
                 </button>
                 <button
                   onClick={() => setActiveView('admin-calendario')}
@@ -139,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                     activeView === 'admin-clientes' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
                   }`}
                 >
-                  Directorio Clientes
+                  <span className="hidden 2xl:inline">Directorio </span>Clientes
                 </button>
                 <button
                   onClick={() => setActiveView('admin-reportes')}
@@ -147,19 +147,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                     activeView === 'admin-reportes' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
                   }`}
                 >
-                  Reportes & Ocupación
+                  Reportes<span className="hidden 2xl:inline"> & Ocupación</span>
                 </button>
               </>
             )}
           </nav>
 
           {/* Zone 3: 1 Primary Action + Quick Role Switcher for Evaluation */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* Quick Role Simulator Toggle */}
-            <div className="hidden sm:flex items-center p-1 bg-stone-200/70 rounded-xl text-xs font-medium">
+            <div className="hidden sm:flex items-center p-0.5 sm:p-1 bg-stone-200/70 rounded-xl text-[11px] sm:text-xs font-medium">
               <button
                 onClick={() => switchRole('CLIENTE')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
                   currentRole === 'CLIENTE'
                     ? 'bg-white text-stone-900 shadow-xs font-semibold'
                     : 'text-stone-600 hover:text-stone-900'
@@ -170,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
               </button>
               <button
                 onClick={() => switchRole('ADMINISTRADOR')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
                   currentRole === 'ADMINISTRADOR'
                     ? 'bg-stone-900 text-amber-300 shadow-xs font-semibold'
                     : 'text-stone-600 hover:text-stone-900'
@@ -185,14 +185,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
             {currentRole === 'CLIENTE' ? (
               <button
                 onClick={() => setActiveView('disponibilidad')}
-                className="px-4 py-2 text-xs font-semibold tracking-wide text-white bg-amber-700 hover:bg-amber-800 active:scale-98 rounded-lg shadow-xs transition-all whitespace-nowrap shrink-0"
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold tracking-wide text-white bg-amber-700 hover:bg-amber-800 active:scale-98 rounded-lg shadow-xs transition-all whitespace-nowrap shrink-0"
               >
                 Reservar Ahora
               </button>
             ) : (
               <button
                 onClick={() => setActiveView('admin-reservas')}
-                className="px-4 py-2 text-xs font-semibold tracking-wide text-white bg-stone-900 hover:bg-stone-800 active:scale-98 rounded-lg shadow-xs transition-all whitespace-nowrap shrink-0"
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold tracking-wide text-white bg-stone-900 hover:bg-stone-800 active:scale-98 rounded-lg shadow-xs transition-all whitespace-nowrap shrink-0"
               >
                 Nueva Reserva
               </button>
@@ -202,7 +202,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
             <button
               onClick={onOpenAuth}
               title={`Sesión activa: ${currentUser.nombre}`}
-              className="w-9 h-9 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-700 transition-colors"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-700 transition-colors shrink-0"
             >
               <User className="w-4 h-4" />
             </button>
