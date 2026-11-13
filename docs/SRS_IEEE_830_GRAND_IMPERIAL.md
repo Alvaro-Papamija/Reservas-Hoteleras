@@ -110,13 +110,13 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
 | **RF-10** | Reservas | Motor de disponibilidad | Consultar habitaciones libres en el rango de fechas [check-in, check-out] y cantidad de personas. | Must Have | Todos |
 | **RF-11** | Reservas | Filtrado de inventario | Filtrar habitaciones disponibles por rango de precio, categoría y capacidad de personas. | Could Have | Todos |
 | **RF-12** | Reservas | Creación de reservas | Vincular una habitación desocupada a un huésped y un período de estadía válido. | Must Have | Cliente / Recepción |
-| **RF-13** | Reservas | Validación de cronología | Exigir estrictamente que la fecha de check-out sea posterior a la de check-in ($S > E \ge 1\text{ noche}$). | Must Have | Sistema |
-| **RF-14** | Reservas | Liquidación automática del costo | Calcular el valor multiplicando el precio base por noche por el número exacto de noches. | Must Have | Sistema |
+| **RF-13** | Reservas | Validación de cronología | Exigir estrictamente que la fecha de check-out sea posterior a la de check-in ($S > E$, estadía mínima 1 noche). | Must Have | Sistema |
+| **RF-14** | Reservas | Liquidación automática del costo | Calcular el valor multiplicando el precio base por noche por el número exacto de noches (`Total = precio_noche * noches`). | Must Have | Sistema |
 | **RF-15** | Reservas | Modificación de reservas | Modificar fechas o número de personas revalidando la disponibilidad en tiempo real. | Should Have | Recepción / Admin |
 | **RF-16** | Reservas | Cancelación de reservas | Anular una reserva activa y liberar la habitación en el motor de disponibilidad inmediatamente. | Must Have | Cliente / Recepción |
 | **RF-17** | Reservas | Historial de reservas | Consultar reservas activas, canceladas o finalizadas con filtros de fecha y estado. | Should Have | Todos (según rol) |
 | **RF-18** | Pagos | Registro de pagos | Asentar pagos asociados a una reserva (Efectivo, Transferencia o Tarjeta manual). | Must Have | Recepción / Admin |
-| **RF-19** | Pagos | Liquidación de saldos | Calcular en tiempo real el saldo: $\text{Saldo Pendiente} = \text{Total} - \sum \text{Abonos}$. | Must Have | Sistema |
+| **RF-19** | Pagos | Liquidación de saldos | Calcular en tiempo real el saldo: `Saldo Pendiente = Total - Pagos Realizados`. | Must Have | Sistema |
 | **RF-20** | Estadía | Ejecución de Check-in | Registrar la hora de llegada del huésped, asociar llave y cambiar la habitación a 'Ocupada'. | Must Have | Recepcionista |
 | **RF-21** | Estadía | Ejecución de Check-out | Registrar la salida, marcar la reserva 'Finalizada' y liberar la habitación a 'Disponible'. | Must Have | Recepcionista |
 | **RF-22** | Reportes | Reportes consolidados | Generar reportes ejecutivos de ocupación mensual, ingresos por canal y cancelaciones. | Should Have | Administrador |
@@ -213,7 +213,7 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
 - **Prioridad:** Alta (Must Have) | **Estimación:** 5 SP
 - **Criterios de Aceptación:**
   - **Escenario 1 (Habitación Nueva Exitosa):**  
-    *Dado* que ingreso el número 105 (no existente), tarifa $150.000 COP y capacidad 2,  
+    *Dado* que ingreso el número 105 (no existente), tarifa \$150.000 COP y capacidad 2,  
     *Cuando* guardo la habitación,  
     *Entonces* la habitación queda guardada en base de datos en estado 'Disponible'.
   - **Escenario 2 (Número Duplicado):**  
@@ -230,7 +230,7 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
 - **Prioridad:** Media (Should Have) | **Estimación:** 5 SP
 - **Criterios de Aceptación:**
   - **Escenario 1 (Actualización de tarifa y servicios):**  
-    *Dado* que selecciono una habitación existente y modifico su precio por noche a $180.000 COP,  
+    *Dado* que selecciono una habitación existente y modifico su precio por noche a \$180.000 COP,  
     *Cuando* presiono "Guardar Cambios",  
     *Entonces* los nuevos valores se actualizan inmediatamente en el catálogo sin alterar reservas pasadas.
   - **Escenario 2 (Desactivación lógica con reservas activas):**  
@@ -266,7 +266,7 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
   - **Escenario 1 (Búsqueda Válida):**  
     *Dado* que selecciono rango [15/12/2026 al 18/12/2026] para 2 personas,  
     *Cuando* presiono "Buscar Disponibles",  
-    *Entonces* el sistema excluye habitaciones en mantenimiento y aquellas con reservas solapadas, calculando: $\text{Total} = \text{precio\_noche} \times \text{noches}$.
+    *Entonces* el sistema excluye habitaciones en mantenimiento y aquellas con reservas solapadas, calculando: `Total = precio_noche * noches`.
   - **Escenario 2 (Fechas Inválidas):**  
     *Dado* que la fecha de salida es menor o igual a la de entrada,  
     *Cuando* inicio la búsqueda,  
@@ -332,9 +332,9 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
 - **Prioridad:** Alta (Must Have) | **Estimación:** 5 SP
 - **Criterios de Aceptación:**
   - **Escenario 1 (Abono Parcial y Actualización de Saldo):**  
-    *Dado* que registro un abono de $100.000 COP a una reserva de $300.000 COP,  
+    *Dado* que registro un abono de \$100.000 COP a una reserva de \$300.000 COP,  
     *Cuando* confirmo el pago,  
-    *Entonces* el sistema asienta el comprobante, recalcula $\text{Nuevo Saldo} = \text{Total} - \sum \text{Pagos} = \$200.000$, dejando el estado de pago en 'Parcial'.
+    *Entonces* el sistema asienta el comprobante, recalcula `Nuevo Saldo = Total - Suma(Pagos) = $200.000 COP`, dejando el estado de pago en 'Parcial'.
   - **Escenario 2 (Liquidación Total):**  
     *Dado* que el pago ingresado cubre exactamente el saldo pendiente,  
     *Cuando* se registra la transacción,  
@@ -366,11 +366,11 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
 - **Prioridad:** Alta (Must Have) | **Estimación:** 5 SP
 - **Criterios de Aceptación:**
   - **Escenario 1 (Check-out con cuenta en cero):**  
-    *Dado* que el huésped tiene check-in previo y saldo pendiente $0 COP,  
+    *Dado* que el huésped tiene check-in previo y saldo pendiente \$0 COP,  
     *Cuando* el recepcionista confirma la salida,  
     *Entonces* el sistema graba `fecha_checkout = NOW()`, pasa la reserva a 'Finalizada' y cambia la habitación a 'Disponible'.
   - **Escenario 2 (Advertencia por saldo pendiente):**  
-    *Dado* que el cliente tiene saldo pendiente > $0 COP,  
+    *Dado* que el cliente tiene saldo pendiente > \$0 COP,  
     *Cuando* se abre la ventana de check-out,  
     *Entonces* el sistema muestra una alerta roja destacada con el monto adeudado exigiendo liquidación previa o autorización expresa.
 
@@ -419,7 +419,7 @@ El sistema para el **Hotel Grand Imperial** surge para transformar los procesos 
   - **Escenario 1 (Visualización de KPIs en tiempo real):**  
     *Dado* que accedo con rol Administrador al panel principal,  
     *Cuando* carga el tablero,  
-    *Entonces* observo la tasa de ocupación: $\text{Ocupación \%} = \frac{\text{Habitaciones Ocupadas}}{\text{Total Habitaciones Activas}} \times 100$, el total recaudado discriminado por método de pago y el calendario interactivo.
+    *Entonces* observo la tasa de ocupación: `(Habitaciones Ocupadas / Total Habitaciones Activas) * 100`, el total recaudado discriminado por método de pago y el calendario interactivo.
 
 ---
 
@@ -561,10 +561,10 @@ flowchart LR
 - **Flujo Principal:**
   1. El actor selecciona la fecha de check-in ($E$), fecha de check-out ($S$) y número de huéspedes.
   2. El actor presiona el botón "Buscar Disponibles".
-  3. El sistema valida que $S > E \ge 1\text{ noche}$.
+  3. El sistema valida que $S > E$, con estadía mínima de 1 noche.
   4. El sistema ejecuta la consulta SQL descartando habitaciones en mantenimiento y aquellas con reservas activas que se solapen con el intervalo:
      $$\text{Excluir si: } (E_{\text{nueva}} < S_{\text{existente}}) \land (S_{\text{nueva}} > E_{\text{existente}})$$
-  5. El sistema calcula el valor total para cada habitación: $\text{Total} = \text{precio\_noche} \times \text{noches}$.
+  5. El sistema calcula el valor total para cada habitación: `Total = precio_noche * noches`.
   6. El sistema renderiza las tarjetas de habitaciones disponibles con fotos, capacidad y comodidades.
 - **Flujos Alternos / Excepciones:**
   - **Excepción 3a (Fechas inválidas):** Si la fecha de salida es anterior o igual a la de entrada, el sistema detiene el proceso y muestra: "La fecha de salida debe ser posterior a la fecha de entrada".
@@ -676,7 +676,7 @@ flowchart LR
   1. El recepcionista ingresa a la pestaña "Huéspedes Alojados / Salidas".
   2. Selecciona la habitación que entrega el huésped.
   3. Presiona "Registrar Check-out (Salida)".
-  4. El sistema verifica el balance contable de la reserva. Si tiene saldo $0 COP, muestra conformidad; si existe saldo, muestra una alerta destacada.
+  4. El sistema verifica el balance contable de la reserva. Si tiene saldo \$0 COP, muestra conformidad; si existe saldo, muestra una alerta destacada.
   5. El recepcionista confirma la salida.
   6. El sistema graba `registros_estadia.fecha_checkout`.
   7. El estado de la reserva pasa a 'Finalizada'.
@@ -689,12 +689,12 @@ flowchart LR
 - **Código:** CU-09
 - **Nombre:** Registrar Recaudos y Pagos
 - **Actor Principal:** Recepcionista o Administrador.
-- **Precondiciones:** Debe existir una reserva registrada con saldo pendiente > $0.
+- **Precondiciones:** Debe existir una reserva registrada con saldo pendiente > \$0 COP.
 - **Flujo Principal:**
   1. El actor ingresa al módulo Pagos o al detalle de una reserva.
   2. Presiona "Registrar Pago".
   3. El sistema muestra el valor total de la reserva y el saldo actual por pagar:
-     $$\text{Saldo Pendiente} = \text{Total} - \sum \text{Pagos}$$
+     `Saldo Pendiente = Total - Pagos Realizados`
   4. El actor ingresa el monto a pagar y selecciona el medio (Efectivo, Transferencia o Tarjeta).
   5. El actor confirma el recaudo.
   6. El sistema guarda el registro en la tabla `pagos` con un número de comprobante único.
@@ -724,7 +724,7 @@ flowchart LR
   5. *(Opcional)* El administrador selecciona un rango de fechas y presiona "Descargar Reporte".
   6. El sistema genera y descarga el archivo consolidado.
 - **Flujos Alternos / Excepciones:**
-  - **Excepción 2a (Sin datos para el período):** Si no existen transacciones en el rango filtrado, el sistema muestra el mensaje: "No existen registros para el período seleccionado" con valores en $0.
+  - **Excepción 2a (Sin datos para el período):** Si no existen transacciones en el rango filtrado, el sistema muestra el mensaje: "No existen registros para el período seleccionado" con valores en \$0 COP.
 - **Postcondición:** La administración obtiene visibilidad operativa y estratégica para la toma de decisiones del hotel.
 
 ---
