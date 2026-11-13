@@ -2,6 +2,9 @@ package com.hotelalborada.backend.service;
 
 import com.hotelalborada.backend.model.Habitacion;
 import com.hotelalborada.backend.repository.HabitacionRepository;
+import com.hotelalborada.backend.repository.HabitacionResumen;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,20 @@ public class HabitacionService {
      */
     public List<Habitacion> listarTodas() {
         return habitacionRepository.findAll();
+    }
+
+    /**
+     * Obtiene habitaciones de manera paginada para reducir la carga de memoria y red.
+     */
+    public Page<Habitacion> listarPaginadas(Pageable pageable) {
+        return habitacionRepository.findAll(pageable);
+    }
+
+    /**
+     * Obtiene proyecciones ligeras solicitando únicamente columnas esenciales.
+     */
+    public List<HabitacionResumen> listarResumenes() {
+        return habitacionRepository.findAllProjectedBy();
     }
 
     /**

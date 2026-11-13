@@ -70,12 +70,35 @@ export const ChatbotConcierge: React.FC<ChatbotConciergeProps> = ({
     setIsTyping(true);
 
     try {
-      // Simulate real-time concierge response
-      setTimeout(async () => {
-        const reply = await consultarConciergeChat(text);
-        setMessages((prev) => [...prev, reply]);
-        setIsTyping(false);
-      }, 500);
+      // Real-time AI Token-by-Token Streaming
+      setIsTyping(true);
+      const fullReply = await consultarConciergeChat(text);
+      setIsTyping(false);
+
+      const msgId = fullReply.id;
+      const initialAssistantMsg: MensajeChat = {
+        ...fullReply,
+        texto: '',
+      };
+      setMessages((prev) => [...prev, initialAssistantMsg]);
+
+      // Stream tokens with interval simulating streaming completion
+      const words = fullReply.texto.split(' ');
+      let currentWordIndex = 0;
+      let accumulatedText = '';
+
+      const streamTimer = setInterval(() => {
+        if (currentWordIndex < words.length) {
+          accumulatedText += (currentWordIndex === 0 ? '' : ' ') + words[currentWordIndex];
+          const textSnapshot = accumulatedText;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === msgId ? { ...m, texto: textSnapshot } : m))
+          );
+          currentWordIndex++;
+        } else {
+          clearInterval(streamTimer);
+        }
+      }, 25);
     } catch (err) {
       setIsTyping(false);
     }

@@ -1,8 +1,13 @@
 package com.hotelalborada.backend.controller;
 
 import com.hotelalborada.backend.model.Habitacion;
+import com.hotelalborada.backend.repository.HabitacionResumen;
 import com.hotelalborada.backend.service.HabitacionService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -12,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -55,6 +61,31 @@ public class HabitacionController {
     public ResponseEntity<List<Habitacion>> listarHabitaciones() {
         List<Habitacion> habitaciones = habitacionService.listarTodas();
         return ResponseEntity.ok(habitaciones);
+    }
+
+    /**
+     * Obtiene las habitaciones de forma paginada para reducir latencia y tamaño de respuesta.
+     * GET /api/habitaciones/paginado?page=0&size=10&sortBy=numero
+     */
+    @GetMapping("/paginado")
+    public ResponseEntity<Page<Habitacion>> listarHabitacionesPaginadas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "numero") String sortBy
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Page<Habitacion> resultado = habitacionService.listarPaginadas(pageable);
+        return ResponseEntity.ok(resultado);
+    }
+
+    /**
+     * Obtiene proyecciones ligeras que solo seleccionan columnas necesarias.
+     * GET /api/habitaciones/resumen
+     */
+    @GetMapping("/resumen")
+    public ResponseEntity<List<HabitacionResumen>> listarResumenHabitaciones() {
+        List<HabitacionResumen> resumenes = habitacionService.listarResumenes();
+        return ResponseEntity.ok(resumenes);
     }
 
     /**

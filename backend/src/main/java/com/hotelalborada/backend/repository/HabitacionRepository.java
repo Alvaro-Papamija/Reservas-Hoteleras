@@ -1,6 +1,8 @@
 package com.hotelalborada.backend.repository;
 
 import com.hotelalborada.backend.model.Habitacion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +17,7 @@ import java.util.Optional;
 public interface HabitacionRepository extends JpaRepository<Habitacion, Long> {
 
     /**
-     * Busca una habitación por su número único.
+     * Busca una habitación por su número único con índice B-Tree acelerado.
      */
     Optional<Habitacion> findByNumero(String numero);
 
@@ -28,5 +30,10 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, Long> {
      * Retorna todas las habitaciones que se encuentran activas en el inventario.
      */
     List<Habitacion> findByActivaTrue();
+
+    /**
+     * Consulta optimizada que recupera únicamente las columnas de resumen vía proyección JPA.
+     */
+    List<HabitacionResumen> findAllProjectedBy();
 }
 

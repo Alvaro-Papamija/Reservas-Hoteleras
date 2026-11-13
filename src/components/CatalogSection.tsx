@@ -183,14 +183,25 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
               transition={{ duration: 0.25 }}
               className="bg-white rounded-2xl overflow-hidden border border-stone-200/90 shadow-xs hover:shadow-md transition-all flex flex-col group"
             >
-              {/* Image with 65-75% height proportion and Fallback Container */}
+              {/* Image with 65-75% height proportion, WebP with fallback, and native lazy loading */}
               <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
-                <img
-                  src={hab.imagen}
-                  alt={`Habitación ${hab.numero} ${tipo?.nombre}`}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
-                />
+                <picture>
+                  {hab.imagen.endsWith('.jpg') && (
+                    <source
+                      srcSet={hab.imagen.replace('.jpg', '.webp')}
+                      type="image/webp"
+                    />
+                  )}
+                  <img
+                    src={hab.imagen}
+                    alt={`Habitación ${hab.numero} ${tipo?.nombre}`}
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    width={400}
+                    height={300}
+                    className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+                  />
+                </picture>
                 {/* Clean Top Tags */}
                 <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-md">
                   Habitación {hab.numero}

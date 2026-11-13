@@ -49,14 +49,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
 
   return (
     <section className="relative min-h-[620px] lg:min-h-[680px] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Fallback and Measured Scrim */}
+      {/* Background Image with WebP format, Fallback, LCP High Fetch Priority and Explicit Dimensions */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="/src/assets/images/hero_resort_solarium_1794431399560.jpg"
-          alt="Alborada Hotel Boutique Solárium y Piscina"
-          referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center scale-105 transform motion-safe:transition-transform motion-safe:duration-1000"
-        />
+        <picture>
+          <source
+            srcSet="/src/assets/images/hero_resort_solarium_1794431399560.webp"
+            type="image/webp"
+          />
+          <img
+            src="/src/assets/images/hero_resort_solarium_1794431399560.jpg"
+            alt="Alborada Hotel Boutique Solárium y Piscina"
+            referrerPolicy="no-referrer"
+            fetchPriority="high"
+            width={1920}
+            height={1080}
+            className="w-full h-full object-cover object-center scale-105 transform motion-safe:transition-transform motion-safe:duration-1000"
+          />
+        </picture>
         {/* Measured dark scrim for 4.5:1 WCAG contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/50 to-stone-900/30" />
       </div>

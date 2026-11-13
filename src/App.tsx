@@ -1,26 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { HotelProvider, useHotel } from './context/HotelContext';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { CatalogSection } from './components/CatalogSection';
 import { DisponibilidadView } from './components/DisponibilidadView';
-import { MyReservationsView } from './components/MyReservationsView';
 import { RoomDetailModal } from './components/RoomDetailModal';
 import { BookingModal } from './components/BookingModal';
-import { BookingConfirmationModal } from './components/BookingConfirmationModal';
 import { AuthModal } from './components/AuthModal';
-import { AIRecommendationModal } from './components/AIRecommendationModal';
 import { ChatbotConcierge } from './components/ChatbotConcierge';
 import { Footer } from './components/Footer';
 import { RoleGuard } from './components/common/RoleGuard';
+import { ViewSkeleton } from './components/common/ViewSkeleton';
 
-// Admin Components
-import { AdminDashboard } from './components/admin/AdminDashboard';
-import { AdminRoomsView } from './components/admin/AdminRoomsView';
-import { AdminReservationsView } from './components/admin/AdminReservationsView';
-import { AdminClientsView } from './components/admin/AdminClientsView';
-import { AdminReportsView } from './components/admin/AdminReportsView';
-import { AdminCalendarView } from './components/admin/AdminCalendarView';
+// Code Splitting: Lazy-loaded secondary & administrative views
+const MyReservationsView = lazy(() =>
+  import('./components/MyReservationsView').then((m) => ({ default: m.MyReservationsView }))
+);
+const BookingConfirmationModal = lazy(() =>
+  import('./components/BookingConfirmationModal').then((m) => ({ default: m.BookingConfirmationModal }))
+);
+const AIRecommendationModal = lazy(() =>
+  import('./components/AIRecommendationModal').then((m) => ({ default: m.AIRecommendationModal }))
+);
+
+// Admin Components (Code Splitting - Loaded only when required by Admin)
+const AdminDashboard = lazy(() =>
+  import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+const AdminRoomsView = lazy(() =>
+  import('./components/admin/AdminRoomsView').then((m) => ({ default: m.AdminRoomsView }))
+);
+const AdminReservationsView = lazy(() =>
+  import('./components/admin/AdminReservationsView').then((m) => ({ default: m.AdminReservationsView }))
+);
+const AdminClientsView = lazy(() =>
+  import('./components/admin/AdminClientsView').then((m) => ({ default: m.AdminClientsView }))
+);
+const AdminReportsView = lazy(() =>
+  import('./components/admin/AdminReportsView').then((m) => ({ default: m.AdminReportsView }))
+);
+const AdminCalendarView = lazy(() =>
+  import('./components/admin/AdminCalendarView').then((m) => ({ default: m.AdminCalendarView }))
+);
 
 import { Habitacion, Reserva } from './types/hotel';
 import {
@@ -186,14 +207,23 @@ const MainApp: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Photo Mosaic */}
+                  {/* Photo Mosaic with WebP & Lazy Loading */}
                   <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-stone-800">
-                    <img
-                      src="/src/assets/images/suite_presidencial_lujo_1794431399634.jpg"
-                      alt="Suite Presidencial con terraza"
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
+                    <picture>
+                      <source
+                        srcSet="/src/assets/images/suite_presidencial_lujo_1794431399634.webp"
+                        type="image/webp"
+                      />
+                      <img
+                        src="/src/assets/images/suite_presidencial_lujo_1794431399634.jpg"
+                        alt="Suite Presidencial con terraza"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        width={800}
+                        height={600}
+                        className="w-full h-full object-cover"
+                      />
+                    </picture>
                   </div>
                 </div>
               </div>
@@ -240,18 +270,22 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
+            <Suspense fallback={<ViewSkeleton />}>
+              <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
+            </Suspense>
           </RoleGuard>
         )}
 
-        {/* Admin Views (Protected: Exclusivo para rol ADMINISTRADOR) */}
+        {/* Admin Views (Protected: Exclusivo para rol ADMINISTRADOR, lazy-loaded con Suspense) */}
         {activeView === 'admin-dashboard' && (
           <RoleGuard
             allowedRoles={['ADMINISTRADOR']}
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminDashboard />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminDashboard />
+            </Suspense>
           </RoleGuard>
         )}
         {activeView === 'admin-habitaciones' && (
@@ -260,7 +294,9 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminRoomsView />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminRoomsView />
+            </Suspense>
           </RoleGuard>
         )}
         {activeView === 'admin-reservas' && (
@@ -269,7 +305,9 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminReservationsView />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminReservationsView />
+            </Suspense>
           </RoleGuard>
         )}
         {activeView === 'admin-calendario' && (
@@ -278,7 +316,9 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminCalendarView />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminCalendarView />
+            </Suspense>
           </RoleGuard>
         )}
         {activeView === 'admin-clientes' && (
@@ -287,7 +327,9 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminClientsView />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminClientsView />
+            </Suspense>
           </RoleGuard>
         )}
         {activeView === 'admin-reportes' && (
@@ -296,7 +338,9 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <AdminReportsView />
+            <Suspense fallback={<ViewSkeleton />}>
+              <AdminReportsView />
+            </Suspense>
           </RoleGuard>
         )}
       </main>
@@ -318,17 +362,19 @@ const MainApp: React.FC = () => {
       />
 
       {confirmedReserva && (
-        <BookingConfirmationModal
-          reserva={confirmedReserva}
-          onViewMyReservations={() => {
-            setConfirmedReserva(null);
-            setActiveView('mis-reservas');
-          }}
-          onContinueBrowsing={() => {
-            setConfirmedReserva(null);
-            setActiveView('habitaciones');
-          }}
-        />
+        <Suspense fallback={null}>
+          <BookingConfirmationModal
+            reserva={confirmedReserva}
+            onViewMyReservations={() => {
+              setConfirmedReserva(null);
+              setActiveView('mis-reservas');
+            }}
+            onContinueBrowsing={() => {
+              setConfirmedReserva(null);
+              setActiveView('habitaciones');
+            }}
+          />
+        </Suspense>
       )}
 
       <AuthModal
@@ -336,13 +382,17 @@ const MainApp: React.FC = () => {
         onClose={() => setIsAuthModalOpen(false)}
       />
 
-      {/* AI Recommendation Modal */}
-      <AIRecommendationModal
-        isOpen={isAIModalOpen}
-        onClose={() => setIsAIModalOpen(false)}
-        onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
-        onOpenDetails={handleOpenRoomDetails}
-      />
+      {/* AI Recommendation Modal (Lazy loaded on demand) */}
+      {isAIModalOpen && (
+        <Suspense fallback={null}>
+          <AIRecommendationModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            onSelectHabitacion={(hab) => handleProceedToBooking(hab)}
+            onOpenDetails={handleOpenRoomDetails}
+          />
+        </Suspense>
+      )}
 
       {/* 24/7 Virtual Concierge Chatbot */}
       <ChatbotConcierge

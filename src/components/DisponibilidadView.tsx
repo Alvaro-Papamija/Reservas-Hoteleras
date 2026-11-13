@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHotel } from '../context/HotelContext';
+import { useDebounce } from '../hooks/useDebounce';
 import { Habitacion } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
 import {
@@ -41,18 +42,27 @@ export const DisponibilidadView: React.FC<DisponibilidadViewProps> = ({
   const [tipoId, setTipoId] = useState<number | undefined>(initialTipoId);
   const [filterPiso, setFilterPiso] = useState<string>('todos');
 
-  // Compute available rooms
-  const rawResults = searchDisponibilidad({
-    fecha_entrada: entrada,
-    fecha_salida: salida,
-    huespedes,
-    id_tipo: tipoId,
-  });
+  // Debounced query values to prevent excessive recalculations
+  const debouncedEntrada = useDebounce(entrada, 200);
+  const debouncedSalida = useDebounce(salida, 200);
+  const debouncedHuespedes = useDebounce(huespedes, 200);
 
-  const availableRooms = rawResults.filter((h) => {
-    if (filterPiso !== 'todos' && h.piso.toString() !== filterPiso) return false;
-    return true;
-  });
+  // Compute available rooms with memoization
+  const rawResults = useMemo(() => {
+    return searchDisponibilidad({
+      fecha_entrada: debouncedEntrada,
+      fecha_salida: debouncedSalida,
+      huespedes: debouncedHuespedes,
+      id_tipo: tipoId,
+    });
+  }, [debouncedEntrada, debouncedSalida, debouncedHuespedes, tipoId, searchDisponibilidad]);
+
+  const availableRooms = useMemo(() => {
+    return rawResults.filter((h) => {
+      if (filterPiso !== 'todos' && h.piso.toString() !== filterPiso) return false;
+      return true;
+    });
+  }, [rawResults, filterPiso]);
 
   const nights = calculateNights(entrada, salida);
 
@@ -234,14 +244,25 @@ export const DisponibilidadView: React.FC<DisponibilidadViewProps> = ({
                 transition={{ duration: 0.3 }}
                 className="bg-white rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs hover:shadow-md transition-all flex flex-col group"
               >
-                {/* Image Container with Fallback */}
+                {/* Image Container with WebP and Lazy Loading */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
-                  <img
-                    src={hab.imagen}
-                    alt={`Habitación ${hab.numero} - ${getTipoName(hab.id_tipo)}`}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
-                  />
+                  <picture>
+                    {hab.imagen.endsWith('.jpg') && (
+                      <source
+                        srcSet={hab.imagen.replace('.jpg', '.webp')}
+                        type="image/webp"
+                      />
+                    )}
+                    <img
+                      src={hab.imagen}
+                      alt={`Habitación ${hab.numero} - ${getTipoName(hab.id_tipo)}`}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      width={400}
+                      height={300}
+                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+                    />
+                  </picture>
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-md">
                     Habitación {hab.numero}
                   </div>

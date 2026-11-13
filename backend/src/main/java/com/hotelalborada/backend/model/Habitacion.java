@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,9 +13,18 @@ import jakarta.validation.constraints.Positive;
 
 /**
  * Entidad JPA que representa una Habitación del hotel, mapeada a la tabla 'habitaciones' en PostgreSQL.
+ * Incluye índices estratégicos para optimizar tiempos de consulta en búsquedas frecuentes.
  */
 @Entity
-@Table(name = "habitaciones")
+@Table(
+        name = "habitaciones",
+        indexes = {
+                @Index(name = "idx_habitaciones_numero", columnList = "numero"),
+                @Index(name = "idx_habitaciones_estado", columnList = "estado"),
+                @Index(name = "idx_habitaciones_activa", columnList = "activa"),
+                @Index(name = "idx_habitaciones_tipo", columnList = "tipo")
+        }
+)
 public class Habitacion {
 
     @Id

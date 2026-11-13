@@ -1,5 +1,9 @@
 server:
   port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024
   servlet:
     context-path: /
 
@@ -16,10 +20,22 @@ spring:
     hikari:
       pool-name: HotelAlboradaHikariPool
       maximum-pool-size: 10
-      minimum-idle: 2
+      minimum-idle: 4
       idle-timeout: 300000
       connection-timeout: 20000
       max-lifetime: 1200000
+
+  # Configuración de Redis Cache Empresarial
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+  cache:
+    type: ${CACHE_TYPE:none}
+    redis:
+      time-to-live: 600000ms # 10 minutos TTL
+      cache-null-values: false
 
   # Configuración de Spring Data JPA / Hibernate
   jpa:
