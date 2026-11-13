@@ -22,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
   const {
     currentRole,
     currentUser,
+    isAuthenticated,
     activeView,
     setActiveView,
     switchRole,
@@ -32,9 +33,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Count active reservations for client
-  const clientActiveCount = reservas.filter(
-    (r) => r.cliente_correo === currentUser.correo && (r.estado === 'PENDIENTE' || r.estado === 'CONFIRMADA')
-  ).length;
+  const clientActiveCount = isAuthenticated && currentUser?.correo
+    ? reservas.filter(
+        (r) => r.cliente_correo.toLowerCase() === currentUser.correo.toLowerCase() && (r.estado === 'PENDIENTE' || r.estado === 'CONFIRMADA')
+      ).length
+    : 0;
 
   return (
     <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-stone-200/80 transition-colors">
@@ -58,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
             </div>
           </button>
 
-          {/* Zone 2: Navigation Links */}
+          {/* Zone 2: Navigation Links (Strict RBAC-filtered) */}
           <nav className="hidden lg:flex items-center gap-2 xl:gap-5 text-xs xl:text-sm font-medium text-stone-600">
             {currentRole === 'CLIENTE' ? (
               <>
@@ -86,19 +89,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                 >
                   Consultar Disponibilidad
                 </button>
-                <button
-                  onClick={() => setActiveView('mis-reservas')}
-                  className={`flex items-center gap-1.5 hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
-                    activeView === 'mis-reservas' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
-                  }`}
-                >
-                  <span>Mis Reservas</span>
-                  {clientActiveCount > 0 && (
-                    <span className="w-5 h-5 text-[11px] font-bold bg-amber-100 text-amber-900 rounded-full flex items-center justify-center font-mono-numbers">
-                      {clientActiveCount}
-                    </span>
-                  )}
-                </button>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => setActiveView('mis-reservas')}
+                    className={`flex items-center gap-1.5 hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                      activeView === 'mis-reservas' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                    }`}
+                  >
+                    <span>Mis Reservas</span>
+                    {clientActiveCount > 0 && (
+                      <span className="w-5 h-5 text-[11px] font-bold bg-amber-100 text-amber-900 rounded-full flex items-center justify-center font-mono-numbers">
+                        {clientActiveCount}
+                      </span>
+                    )}
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -205,10 +210,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
             {/* Profile / Switcher button */}
             <button
               onClick={onOpenAuth}
-              title={`Sesión activa: ${currentUser.nombre}`}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-700 transition-colors shrink-0"
+              title={isAuthenticated ? `Sesión activa: ${currentUser.nombre} (${currentRole})` : 'Iniciar sesión'}
+              className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 flex items-center gap-1.5 text-xs text-stone-700 transition-colors shrink-0 shadow-2xs"
             >
-              <User className="w-4 h-4" />
+              <User className="w-3.5 h-3.5 text-stone-500" />
+              <span className="hidden md:inline font-medium text-[11px] max-w-[100px] truncate">
+                {isAuthenticated ? currentUser.nombre.split(' ')[0] : 'Ingresar'}
+              </span>
             </button>
 
             {/* Mobile menu trigger */}
@@ -284,20 +292,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                 >
                   Consultar Disponibilidad
                 </button>
-                <button
-                  onClick={() => {
-                    setActiveView('mis-reservas');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-left py-2 hover:text-amber-800 flex items-center justify-between"
-                >
-                  <span>Mis Reservas</span>
-                  {clientActiveCount > 0 && (
-                    <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-900 rounded-full font-mono-numbers">
-                      {clientActiveCount}
-                    </span>
-                  )}
-                </button>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      setActiveView('mis-reservas');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-left py-2 hover:text-amber-800 flex items-center justify-between"
+                  >
+                    <span>Mis Reservas</span>
+                    {clientActiveCount > 0 && (
+                      <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-900 rounded-full font-mono-numbers">
+                        {clientActiveCount}
+                      </span>
+                    )}
+                  </button>
+                )}
               </>
             ) : (
               <>

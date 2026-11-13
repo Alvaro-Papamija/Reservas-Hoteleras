@@ -46,6 +46,7 @@ interface HotelContextType {
   notificaciones: Notificacion[];
   currentRole: RolUsuario;
   currentUser: Usuario;
+  isAuthenticated: boolean;
   currentCliente: Cliente | null;
   activeView: 'inicio' | 'habitaciones' | 'disponibilidad' | 'mis-reservas' | 'admin-dashboard' | 'admin-habitaciones' | 'admin-reservas' | 'admin-clientes' | 'admin-reportes' | 'admin-calendario';
   
@@ -141,9 +142,35 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_NOTIFICACIONES;
   });
 
-  const [currentRole, setCurrentRole] = useState<RolUsuario>('CLIENTE');
-  const [currentUser, setCurrentUser] = useState<Usuario>(INITIAL_USUARIOS[1]); // Default Laura Gómez (Cliente)
+  const [currentRole, setCurrentRole] = useState<RolUsuario>(() => {
+    const saved = localStorage.getItem('alborada_current_role');
+    return (saved as RolUsuario) || 'CLIENTE';
+  });
+
+  const [currentUser, setCurrentUser] = useState<Usuario>(() => {
+    const saved = localStorage.getItem('alborada_current_user');
+    return saved ? JSON.parse(saved) : INITIAL_USUARIOS[1]; // Default Laura Gómez (Cliente)
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const saved = localStorage.getItem('alborada_is_auth');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
   const [activeView, setActiveView] = useState<any>('inicio');
+
+  // Sync to localStorage
+  useEffect(() => {
+    localStorage.setItem('alborada_current_role', currentRole);
+  }, [currentRole]);
+
+  useEffect(() => {
+    localStorage.setItem('alborada_current_user', JSON.stringify(currentUser));
+  }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('alborada_is_auth', JSON.stringify(isAuthenticated));
+  }, [isAuthenticated]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -180,6 +207,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Role switching
   const switchRole = (role: RolUsuario) => {
     setCurrentRole(role);
+    setIsAuthenticated(true);
     if (role === 'ADMINISTRADOR') {
       setCurrentUser(INITIAL_USUARIOS[0]); // Alvaro Papamija
       if (activeView === 'inicio' || activeView === 'mis-reservas') {
@@ -198,6 +226,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (user) {
       setCurrentUser(user);
       setCurrentRole(user.rol);
+      setIsAuthenticated(true);
       if (user.rol === 'ADMINISTRADOR') {
         setActiveView('admin-dashboard');
       } else {
@@ -209,7 +238,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const logout = () => {
-    switchRole('CLIENTE');
+    setIsAuthenticated(false);
+    setCurrentRole('CLIENTE');
+    setCurrentUser({
+      id_usuario: 0,
+      nombre: 'Invitado',
+      correo: '',
+      rol: 'CLIENTE',
+      estado: true,
+    });
     setActiveView('inicio');
   };
 
@@ -315,6 +352,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const calificarReserva = (idReserva: number, calificacion: number, comentario: string) => {
     const target = reservas.find((r) => r.id_reserva === idReserva);
     if (!target) return { success: false, error: 'Reserva no encontrada.' };
+
+    // RBAC: Client can only rate their own reservations
+    if (currentRole === 'CLIENTE' && target.cliente_correo.toLowerCase() !== currentUser.correo.toLowerCase()) {
+      return { success: false, error: 'Acceso denegado: solo puedes calificar estancias asociadas a tu cuenta.' };
+    }
 
     setReservas((prev) =>
       prev.map((r) =>
@@ -787,8 +829,16 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return { success: false, error: 'Una reserva finalizada no puede cancelarse.' };
     }
 
-    // RN05: 48-hour policy for clients
+    // RBAC: Client can only cancel their own reservations
     if (isClientAction && currentRole === 'CLIENTE') {
+      if (!currentUser.correo || reserva.cliente_correo.trim().toLowerCase() !== currentUser.correo.trim().toLowerCase()) {
+        return {
+          success: false,
+          error: 'Acceso denegado: no tienes autorización para cancelar reservaciones de otros huéspedes.',
+        };
+      }
+
+      // RN05: 48-hour policy for clients
       const entradaDate = new Date(`${reserva.fecha_entrada}T15:00:00`);
       const now = new Date();
       const diffHours = (entradaDate.getTime() - now.getTime()) / (1000 * 3600);
@@ -823,6 +873,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // HU10: State Machine Transitions (Admin)
   const cambiarEstadoReserva = (idReserva: number, nuevoEstado: EstadoReserva): { success: boolean; error?: string } => {
+    // RBAC Guard
+    if (currentRole !== 'ADMINISTRADOR') {
+      return { success: false, error: 'Acceso denegado: se requieren permisos de ADMINISTRADOR para modificar el estado de reservas.' };
+    }
+
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
     if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
 
@@ -855,6 +910,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Room Management (Admin)
   const addHabitacion = (habData: Omit<Habitacion, 'id_habitacion'>): { success: boolean; error?: string } => {
+    // RBAC Guard
+    if (currentRole !== 'ADMINISTRADOR') {
+      return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para registrar nuevas habitaciones.' };
+    }
+
     // Check unique number
     if (habitaciones.some((h) => h.numero.toLowerCase() === habData.numero.toLowerCase())) {
       return { success: false, error: `Ya existe una habitación registrada con el número ${habData.numero}.` };
@@ -871,6 +931,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateHabitacion = (hab: Habitacion): { success: boolean; error?: string } => {
+    // RBAC Guard
+    if (currentRole !== 'ADMINISTRADOR') {
+      return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para editar habitaciones.' };
+    }
+
     if (habitaciones.some((h) => h.id_habitacion !== hab.id_habitacion && h.numero.toLowerCase() === hab.numero.toLowerCase())) {
       return { success: false, error: `El número ${hab.numero} ya está en uso por otra habitación.` };
     }
@@ -880,6 +945,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const cambiarEstadoHabitacion = (idHabitacion: number, nuevoEstado: EstadoHabitacion) => {
+    // RBAC Guard
+    if (currentRole !== 'ADMINISTRADOR') return;
+
     setHabitaciones((prev) =>
       prev.map((h) => (h.id_habitacion === idHabitacion ? { ...h, estado: nuevoEstado } : h))
     );
@@ -887,6 +955,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // HU08: Deactivate logically instead of deleting if future reservations exist
   const toggleHabitacionActiva = (idHabitacion: number): { success: boolean; error?: string } => {
+    // RBAC Guard
+    if (currentRole !== 'ADMINISTRADOR') {
+      return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para cambiar la disponibilidad de habitaciones.' };
+    }
+
     const hab = habitaciones.find((h) => h.id_habitacion === idHabitacion);
     if (!hab) return { success: false, error: 'Habitación no encontrada.' };
 
@@ -942,6 +1015,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         notificaciones,
         currentRole,
         currentUser,
+        isAuthenticated,
         currentCliente,
         activeView,
         setActiveView,

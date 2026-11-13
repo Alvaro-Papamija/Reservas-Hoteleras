@@ -22,6 +22,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const {
     currentUser,
     currentRole,
+    isAuthenticated,
     loginAs,
     switchRole,
     logout,
@@ -74,7 +75,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               Control de Sesión & Roles
             </h3>
             <p className="text-xs text-stone-500 mt-1">
-              Sesión activa: <strong className="text-stone-800">{currentUser.nombre}</strong> ({currentRole})
+              Sesión activa:{' '}
+              {isAuthenticated ? (
+                <>
+                  <strong className="text-stone-800">{currentUser.nombre}</strong> ({currentRole})
+                </>
+              ) : (
+                <span className="italic text-stone-600 font-medium">Modo Visitante (Sin sesión iniciada)</span>
+              )}
             </p>
           </div>
 
@@ -91,7 +99,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 onClose();
               }}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                currentRole === 'ADMINISTRADOR'
+                isAuthenticated && currentRole === 'ADMINISTRADOR'
                   ? 'border-amber-800 bg-amber-50/80 text-amber-950 shadow-xs'
                   : 'border-stone-200 hover:border-stone-300 bg-stone-50/60'
               }`}
@@ -116,7 +124,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 onClose();
               }}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                currentUser.correo === 'laura.gomez@ejemplo.com'
+                isAuthenticated && currentUser.correo === 'laura.gomez@ejemplo.com'
                   ? 'border-amber-800 bg-amber-50/80 text-amber-950 shadow-xs'
                   : 'border-stone-200 hover:border-stone-300 bg-stone-50/60'
               }`}
@@ -141,7 +149,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 onClose();
               }}
               className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                currentUser.correo === 'carlos.restrepo@ejemplo.com'
+                isAuthenticated && currentUser.correo === 'carlos.restrepo@ejemplo.com'
                   ? 'border-amber-800 bg-amber-50/80 text-amber-950 shadow-xs'
                   : 'border-stone-200 hover:border-stone-300 bg-stone-50/60'
               }`}
@@ -153,6 +161,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div>
                   <div className="text-xs font-bold text-stone-900">Carlos Restrepo (Huésped)</div>
                   <div className="text-[11px] text-stone-500">carlos.restrepo@ejemplo.com · Bogotá</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400" />
+            </button>
+
+            {/* Option: Visitor / Guest Mode */}
+            <button
+              onClick={() => {
+                logout();
+                onClose();
+              }}
+              className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
+                !isAuthenticated
+                  ? 'border-amber-800 bg-amber-50/80 text-amber-950 shadow-xs'
+                  : 'border-stone-200 hover:border-stone-300 bg-stone-50/60'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-stone-400 text-white flex items-center justify-center font-bold text-xs">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-stone-900">Modo Visitante (Invitado)</div>
+                  <div className="text-[11px] text-stone-500">Sin autenticación · Acceso solo público</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />

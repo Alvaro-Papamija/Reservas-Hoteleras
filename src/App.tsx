@@ -12,6 +12,7 @@ import { AuthModal } from './components/AuthModal';
 import { AIRecommendationModal } from './components/AIRecommendationModal';
 import { ChatbotConcierge } from './components/ChatbotConcierge';
 import { Footer } from './components/Footer';
+import { RoleGuard } from './components/common/RoleGuard';
 
 // Admin Components
 import { AdminDashboard } from './components/admin/AdminDashboard';
@@ -232,18 +233,72 @@ const MainApp: React.FC = () => {
           />
         )}
 
-        {/* Guest View: Mis Reservas */}
+        {/* Guest View: Mis Reservas (Protected: Requiere Huésped o Administrador autenticado) */}
         {activeView === 'mis-reservas' && (
-          <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
+          <RoleGuard
+            allowedRoles={['CLIENTE', 'ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
+          </RoleGuard>
         )}
 
-        {/* Admin Views */}
-        {activeView === 'admin-dashboard' && <AdminDashboard />}
-        {activeView === 'admin-habitaciones' && <AdminRoomsView />}
-        {activeView === 'admin-reservas' && <AdminReservationsView />}
-        {activeView === 'admin-calendario' && <AdminCalendarView />}
-        {activeView === 'admin-clientes' && <AdminClientsView />}
-        {activeView === 'admin-reportes' && <AdminReportsView />}
+        {/* Admin Views (Protected: Exclusivo para rol ADMINISTRADOR) */}
+        {activeView === 'admin-dashboard' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminDashboard />
+          </RoleGuard>
+        )}
+        {activeView === 'admin-habitaciones' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminRoomsView />
+          </RoleGuard>
+        )}
+        {activeView === 'admin-reservas' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminReservationsView />
+          </RoleGuard>
+        )}
+        {activeView === 'admin-calendario' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminCalendarView />
+          </RoleGuard>
+        )}
+        {activeView === 'admin-clientes' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminClientsView />
+          </RoleGuard>
+        )}
+        {activeView === 'admin-reportes' && (
+          <RoleGuard
+            allowedRoles={['ADMINISTRADOR']}
+            requireAuth={true}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          >
+            <AdminReportsView />
+          </RoleGuard>
+        )}
       </main>
 
       {/* Modals */}

@@ -40,7 +40,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
   // Filter client's reservations
   const clientReservations = reservas.filter(
-    (r) => r.cliente_correo.toLowerCase() === currentUser.correo.toLowerCase()
+    (r) => currentUser?.correo && r.cliente_correo.toLowerCase() === currentUser.correo.toLowerCase()
   );
 
   const filtered = clientReservations.filter((r) => {
