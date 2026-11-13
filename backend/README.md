@@ -165,3 +165,4 @@ curl -X GET http://localhost:8080/api/habitaciones
 4. **Puntos de Ajuste para Despliegue:**
    - En entornos de producción (AWS RDS, Railway, Render o servidor local dedicado), reemplazar las variables en el archivo `.env` o en el orquestador de contenedores (`DB_HOST`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`).
    - Cambiar `spring.jpa.hibernate.ddl-auto` a `validate` o usar herramientas de migración como Flyway/Liquibase una vez estabilizado el esquema de producción.
+

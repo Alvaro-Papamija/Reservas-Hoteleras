@@ -29,3 +29,4 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, Long> {
      */
     List<Habitacion> findByActivaTrue();
 }
+
