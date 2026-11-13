@@ -12,9 +12,8 @@
 | **Entidad Académica** | Servicio Nacional de Aprendizaje (SENA) |
 | **Centro de Formación** | Centro de la Industria, la Empresa y los Servicios — Regional Huila |
 | **Programa de Formación** | Tecnólogo en Análisis y Desarrollo de Software (ADSO) |
-| **Ficha de Caracterización** | 3413988 / 2670142 |
+| **Ficha de Caracterización** | 3413988 |
 | **Aprendiz / Desarrollador** | Alvaro Andrés Papamija Chala (Líder y Desarrollador de Software) |
-| **Instructor Asesor** | Carlos Fabián Martínez Mora |
 | **Ubicación y Fecha** | Neiva, Huila — Noviembre de 2026 |
 | **Versión del Documento** | 2.1.0 (Estructuración Integral Normalizada IEEE 830) |
 | **Estado del Documento** | Aprobado / Línea Base de Requisitos |
@@ -142,7 +141,6 @@ Dotar al Hotel Grand Imperial de una plataforma web transaccional propia le perm
 | Nombre | Rol en el Proyecto | Responsabilidades | Contacto |
 |---|---|---|---|
 | **Alvaro Andrés Papamija Chala** | Líder de Proyecto / Desarrollador Full Stack | Análisis de requisitos, diseño de arquitectura, codificación de frontend/backend, pruebas unitarias y documentación. | AAPC34882791@soy.sena.edu.co |
-| **Carlos Fabián Martínez Mora** | Instructor Técnico Asesor | Orientación metodológica, aprobación del estándar IEEE 830 y evaluación técnica de fases. | Formación SENA Huila |
 | **Administración del Hotel** | Stakeholder / Product Owner | Parametrización de tarifas, habitaciones, validación de reglas de negocio y aprobación final. | Hotel Grand Imperial |
 | **Personal de Recepción** | Usuario Operativo | Pruebas de usabilidad en mostrador, check-in, check-out y liquidación de pagos. | Front-Desk Hotel |
 
