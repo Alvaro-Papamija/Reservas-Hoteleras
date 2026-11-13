@@ -20,3 +20,4 @@ public interface HabitacionResumen {
 
     Boolean getActiva();
 }
+

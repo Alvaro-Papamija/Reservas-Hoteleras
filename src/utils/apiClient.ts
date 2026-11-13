@@ -97,3 +97,4 @@ class PerformanceApiClient {
 }
 
 export const apiClient = new PerformanceApiClient();
+

@@ -36,3 +36,4 @@ export const ViewSkeleton: React.FC = () => {
     </div>
   );
 };
+

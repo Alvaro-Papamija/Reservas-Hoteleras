@@ -84,3 +84,4 @@ export function initWebVitalsRUM(onReport?: (metric: MetricReport) => void): voi
     // Graceful fallback if observer types are unsupported
   }
 }
+

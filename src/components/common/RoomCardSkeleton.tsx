@@ -20,3 +20,4 @@ export const RoomCardSkeleton: React.FC = () => {
     </div>
   );
 };
+
