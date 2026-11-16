@@ -72,7 +72,19 @@ export interface Reserva {
   estado: EstadoReserva;
   fecha_creacion: string;
   notas?: string;
+  consentimiento_legal?: ConsentimientoLegal;
 }
+
+export interface ConsentimientoLegal {
+  acepto_terminos: boolean;
+  autorizo_tratamiento_datos: boolean;
+  autorizo_comunicaciones_comerciales: boolean;
+  version_politica: string;
+  fecha_consentimiento: string;
+  ip_registro?: string;
+}
+
+export type TipoDocumentoLegal = 'terminos' | 'privacidad' | 'cookies' | 'retracto';
 
 export interface Cupon {
   codigo: string;

@@ -7,6 +7,8 @@ import { DisponibilidadView } from './components/DisponibilidadView';
 import { RoomDetailModal } from './components/RoomDetailModal';
 import { BookingModal } from './components/BookingModal';
 import { AuthModal } from './components/AuthModal';
+import { LegalModal } from './components/LegalModal';
+import { CookieBanner } from './components/CookieBanner';
 import { ChatbotConcierge } from './components/ChatbotConcierge';
 import { Footer } from './components/Footer';
 import { RoleGuard } from './components/common/RoleGuard';
@@ -43,7 +45,7 @@ const AdminCalendarView = lazy(() =>
   import('./components/admin/AdminCalendarView').then((m) => ({ default: m.AdminCalendarView }))
 );
 
-import { Habitacion, Reserva } from './types/hotel';
+import { Habitacion, Reserva, TipoDocumentoLegal } from './types/hotel';
 import {
   Sparkles,
   Waves,
@@ -77,8 +79,14 @@ const MainApp: React.FC = () => {
   const [confirmedReserva, setConfirmedReserva] = useState<Reserva | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalDocType, setLegalDocType] = useState<TipoDocumentoLegal>('terminos');
 
   // Handlers
+  const handleOpenLegal = (doc: TipoDocumentoLegal) => {
+    setLegalDocType(doc);
+    setIsLegalModalOpen(true);
+  };
   const handleHeroSearch = (params: { entrada: string; salida: string; huespedes: number; tipoId?: number }) => {
     setSearchParams(params);
     setActiveView('disponibilidad');
@@ -359,6 +367,7 @@ const MainApp: React.FC = () => {
         defaultHuespedes={searchParams.huespedes}
         onClose={() => setBookingModalHab(null)}
         onSuccess={handleBookingSuccess}
+        onOpenLegal={handleOpenLegal}
       />
 
       {confirmedReserva && (
@@ -380,6 +389,7 @@ const MainApp: React.FC = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        onOpenLegal={handleOpenLegal}
       />
 
       {/* AI Recommendation Modal (Lazy loaded on demand) */}
@@ -400,8 +410,20 @@ const MainApp: React.FC = () => {
         onOpenDetails={handleOpenRoomDetails}
       />
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer con Cumplimiento Legal Colombiano */}
+      <Footer onOpenLegal={handleOpenLegal} />
+
+      {/* Modal Legal Interactivo Multi-Documento */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        initialDoc={legalDocType}
+        onClose={() => setIsLegalModalOpen(false)}
+      />
+
+      {/* Banner de Consentimiento de Cookies (Ley 1581 / SIC) */}
+      <CookieBanner
+        onOpenCookiesPolicy={() => handleOpenLegal('cookies')}
+      />
     </div>
   );
 };

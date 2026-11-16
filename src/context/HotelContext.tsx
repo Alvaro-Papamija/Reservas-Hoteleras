@@ -16,6 +16,7 @@ import {
   RecomendacionIAResult,
   MensajeChat,
   PrediccionOcupacionDia,
+  ConsentimientoLegal,
 } from '../types/hotel';
 import {
   INITIAL_HABITACIONES,
@@ -88,6 +89,7 @@ interface HotelContextType {
     notas?: string;
     cupon_codigo?: string;
     cliente_override?: Partial<Cliente>;
+    consentimiento_legal?: ConsentimientoLegal;
   }) => { success: boolean; reserva?: Reserva; error?: string };
   
   cancelarReserva: (idReserva: number, isClientAction?: boolean) => { success: boolean; error?: string };
@@ -728,8 +730,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     notas?: string;
     cupon_codigo?: string;
     cliente_override?: Partial<Cliente>;
+    consentimiento_legal?: ConsentimientoLegal;
   }): { success: boolean; reserva?: Reserva; error?: string } => {
-    const { id_habitacion, fecha_entrada, fecha_salida, cantidad_huespedes, notas, cupon_codigo, cliente_override } = data;
+    const { id_habitacion, fecha_entrada, fecha_salida, cantidad_huespedes, notas, cupon_codigo, cliente_override, consentimiento_legal } = data;
 
     // Validation 1: Dates
     const start = new Date(fecha_entrada);
@@ -847,6 +850,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       estado: 'PENDIENTE',
       fecha_creacion: new Date().toISOString(),
       notas: notas || '',
+      consentimiento_legal,
     };
 
     setReservas((prev) => [nuevaReserva, ...prev]);

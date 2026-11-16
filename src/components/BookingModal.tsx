@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHotel } from '../context/HotelContext';
-import { Habitacion, Reserva, Cupon } from '../types/hotel';
+import { Habitacion, Reserva, Cupon, TipoDocumentoLegal, ConsentimientoLegal } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
 import {
   X,
@@ -15,6 +15,8 @@ import {
   Sparkles,
   Tag,
   Check,
+  Scale,
+  CheckCircle2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,6 +27,7 @@ interface BookingModalProps {
   defaultHuespedes?: number;
   onClose: () => void;
   onSuccess: (reserva: Reserva) => void;
+  onOpenLegal?: (doc: TipoDocumentoLegal) => void;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
@@ -34,6 +37,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   defaultHuespedes = 2,
   onClose,
   onSuccess,
+  onOpenLegal,
 }) => {
   const { tipos, currentCliente, currentUser, createReserva, calculateTotal, validarCupon } = useHotel();
 
@@ -41,6 +45,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [fechaSalida, setFechaSalida] = useState(defaultSalida);
   const [huespedes, setHuespedes] = useState(defaultHuespedes);
   const [notas, setNotas] = useState('');
+
+  // Legal consent states (Mandatory unselected by default per Ley 1581 and Ley 1480)
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [autorizaDatos, setAutorizaDatos] = useState(false);
+  const [autorizaPromociones, setAutorizaPromociones] = useState(false);
 
   // Coupons
   const [codigoCupon, setCodigoCupon] = useState('');
@@ -87,9 +96,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    // Legal Compliance Verification (Ley 1581 de 2012 y Ley 1480 de 2011)
+    if (!aceptaTerminos || !autorizaDatos) {
+      setErrorMessage(
+        'Debe aceptar los Términos y Condiciones y autorizar de forma previa y expresa el tratamiento de sus datos personales conforme a la Ley 1581 de 2012 para confirmar la reserva.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Call context service
+    // Call context service with audit consent proof
     const result = createReserva({
       id_habitacion: habitacion.id_habitacion,
       fecha_entrada: fechaEntrada,
@@ -103,6 +121,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         documento,
         telefono,
         correo,
+      },
+      consentimiento_legal: {
+        acepto_terminos: true,
+        autorizo_tratamiento_datos: true,
+        autorizo_comunicaciones_comerciales: autorizaPromociones,
+        version_politica: 'v1.0-2026',
+        fecha_consentimiento: new Date().toISOString(),
       },
     });
 
@@ -383,14 +408,87 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
+            {/* Mandatory Legal Consents (Ley 1581 de 2012 y Ley 1480 de 2011) */}
+            <div className="bg-stone-50/80 p-4 rounded-2xl border border-stone-200/90 space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 uppercase tracking-wider">
+                <Scale className="w-3.5 h-3.5 text-amber-700" />
+                <span>Autorizaciones Legales & Protección de Datos</span>
+              </div>
+
+              {/* Checkbox 1: Terms and Conditions + Cancellation Policy */}
+              <label className="flex items-start gap-2.5 text-xs text-stone-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={aceptaTerminos}
+                  onChange={(e) => setAceptaTerminos(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-stone-300 text-amber-700 focus:ring-amber-700 focus:ring-offset-0"
+                  required
+                />
+                <span className="leading-relaxed">
+                  He leído y acepto los{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegal && onOpenLegal('terminos')}
+                    className="text-amber-800 underline font-semibold hover:text-amber-900 inline"
+                  >
+                    Términos y Condiciones
+                  </button>{' '}
+                  y la{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegal && onOpenLegal('retracto')}
+                    className="text-amber-800 underline font-semibold hover:text-amber-900 inline"
+                  >
+                    Política de Cancelación y Retracto
+                  </button>{' '}
+                  (Ley 1480 de 2011). <span className="text-rose-600 font-bold">*</span>
+                </span>
+              </label>
+
+              {/* Checkbox 2: Data Treatment Policy (Ley 1581 / Dec 1377) */}
+              <label className="flex items-start gap-2.5 text-xs text-stone-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={autorizaDatos}
+                  onChange={(e) => setAutorizaDatos(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-stone-300 text-amber-700 focus:ring-amber-700 focus:ring-offset-0"
+                  required
+                />
+                <span className="leading-relaxed">
+                  Autorizo de manera previa, expresa e informada a ALBORADA HOSPITALITY S.A.S. para tratar mis datos personales conforme a su{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegal && onOpenLegal('privacidad')}
+                    className="text-amber-800 underline font-semibold hover:text-amber-900 inline"
+                  >
+                    Política de Tratamiento de Datos Personales
+                  </button>{' '}
+                  con fines de reserva, facturación y reporte a la TRH / Migración Colombia. <span className="text-rose-600 font-bold">*</span>
+                </span>
+              </label>
+
+              {/* Checkbox 3: Optional Marketing Communications */}
+              <label className="flex items-start gap-2.5 text-xs text-stone-600 cursor-pointer select-none pt-1 border-t border-stone-200/60">
+                <input
+                  type="checkbox"
+                  checked={autorizaPromociones}
+                  onChange={(e) => setAutorizaPromociones(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-stone-300 text-amber-700 focus:ring-amber-700 focus:ring-offset-0"
+                />
+                <span className="leading-relaxed text-[11px]">
+                  (Opcional) Deseo recibir promociones de temporada, cupones de descuento y novedades por correo electrónico.
+                </span>
+              </label>
+            </div>
+
             {/* Trust and Policy Notice */}
             <div className="text-[11px] text-stone-500 space-y-1">
               <div className="flex items-center gap-1.5 text-stone-700 font-medium">
                 <Lock className="w-3.5 h-3.5 text-amber-800" />
-                <span>Política de Cancelación Flexible</span>
+                <span>Garantía de Reserva Directa & Retracto Legal</span>
               </div>
               <p>
-                Puedes cancelar sin ningún costo hasta 48 horas antes de la fecha de entrada. La reserva se genera en estado PENDIENTE y queda asegurada con tu código único.
+                Conforme al Art. 47 de la Ley 1480 de 2011, cuentas con derecho de retracto dentro de los 5 días hábiles siguientes a la reserva salvo estancias inmediatas. Adicionalmente, el hotel garantiza cancelación voluntaria sin penalidad hasta 48 horas antes del check-in.
               </p>
             </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHotel } from '../context/HotelContext';
 import { AuthService } from '../utils/authService';
+import { TipoDocumentoLegal } from '../types/hotel';
 import {
   X,
   User,
@@ -17,6 +18,7 @@ import {
   RefreshCw,
   LogOut,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -24,12 +26,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'login' | 'register';
+  onOpenLegal?: (doc: TipoDocumentoLegal) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'login',
+  onOpenLegal,
 }) => {
   const {
     currentUser,
@@ -51,6 +55,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [contrasena, setContrasena] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [persistSession, setPersistSession] = useState(false);
+
+  // Colombian Legal Compliance Checkboxes (desmarcadas por defecto - Ley 1581 de 2012 / Ley 1480 de 2011)
+  const [authAceptaTerminos, setAuthAceptaTerminos] = useState(false);
+  const [authAutorizaDatos, setAuthAutorizaDatos] = useState(false);
 
   // Validation & Error States
   const [fieldErrors, setFieldErrors] = useState<{ nombre?: string; correo?: string; contrasena?: string }>({});
@@ -152,6 +160,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setGlobalError(result.error || 'Correo o contraseña incorrectos');
         }
       } else {
+        if (!authAceptaTerminos || !authAutorizaDatos) {
+          setGlobalError('Debe aceptar los Términos y Condiciones y autorizar el Tratamiento de Datos Personales para crear su cuenta.');
+          setIsLoading(false);
+          return;
+        }
+
         const result = await register(nombre, correo, contrasena);
 
         if (result.success) {
@@ -402,6 +416,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <p className="text-[11px] text-rose-600 mt-1 font-medium">{fieldErrors.contrasena}</p>
               )}
             </div>
+
+            {/* Casillas de Cumplimiento Legal Colombiano (Solo en Registro) */}
+            {activeTab === 'register' && (
+              <div className="pt-2 pb-1 space-y-2 border-t border-stone-100 text-[11px] text-stone-600">
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={authAceptaTerminos}
+                    onChange={(e) => setAuthAceptaTerminos(e.target.checked)}
+                    className="mt-0.5 rounded border-stone-300 text-amber-800 focus:ring-amber-800 w-3.5 h-3.5 shrink-0"
+                    required
+                  />
+                  <span>
+                    He leído y acepto los{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.('terminos')}
+                      className="text-amber-800 underline font-semibold hover:text-amber-900 inline-flex items-center gap-0.5"
+                    >
+                      Términos y Condiciones
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </button>{' '}
+                    de Alborada Hotel Boutique. <span className="text-rose-500 font-bold">*</span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={authAutorizaDatos}
+                    onChange={(e) => setAuthAutorizaDatos(e.target.checked)}
+                    className="mt-0.5 rounded border-stone-300 text-amber-800 focus:ring-amber-800 w-3.5 h-3.5 shrink-0"
+                    required
+                  />
+                  <span>
+                    Autorizo de manera previa, expresa e informada el tratamiento de mis datos personales según la{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.('privacidad')}
+                      className="text-amber-800 underline font-semibold hover:text-amber-900 inline-flex items-center gap-0.5"
+                    >
+                      Política de Tratamiento de Información (PTI)
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </button>{' '}
+                    (Ley 1581 de 2012). <span className="text-rose-500 font-bold">*</span>
+                  </span>
+                </label>
+              </div>
+            )}
 
             {/* Recordar Sesión */}
             {activeTab === 'login' && (
