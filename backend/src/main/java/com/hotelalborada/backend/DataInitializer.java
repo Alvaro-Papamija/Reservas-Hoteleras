@@ -5,13 +5,17 @@ import com.hotelalborada.backend.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
  * Semilla de inicialización de usuarios de prueba con contraseñas cifradas en BCrypt.
+ * Aislado exclusivamente para perfiles de desarrollo y pruebas ('dev', 'test').
+ * En producción (perfil 'prod' o por defecto) se deshabilita para evitar credenciales predecibles.
  */
 @Component
+@Profile({"dev", "test"})
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);

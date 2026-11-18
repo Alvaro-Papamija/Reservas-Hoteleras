@@ -30,7 +30,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/habitaciones")
-@CrossOrigin(origins = "*")
 public class HabitacionController {
 
     private final HabitacionService habitacionService;

@@ -1,5 +1,8 @@
 server:
   port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
@@ -42,28 +45,30 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
-    show-sql: ${SHOW_SQL:true}
+    show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         jdbc:
           time_zone: UTC
 
-# Parámetros de Autenticación, JWT y Seguridad OWASP
+# Parámetros de Autenticación, JWT, CORS y Seguridad OWASP
 app:
   jwt:
     secret: ${JWT_SECRET:HotelAlboradaSuperSecureSecretKey2026WithSufficientEntropyAndLengthForHMACSHA256}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000} # 1 hora
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}
   security:
     rate-limit:
       max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
       lockout-duration-minutes: ${RATE_LIMIT_LOCKOUT_MINUTES:15}
 
-# Configuración de Logging
+# Configuración de Logging - Información interna y consultas SQL silenciadas en producción
 logging:
   level:
     root: INFO
-    com.hotelalborada.backend: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.hotelalborada.backend: INFO
+    org.hibernate.SQL: ${HIBERNATE_LOG_LEVEL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_BINDER_LOG_LEVEL:WARN}
 

@@ -124,9 +124,8 @@ public class AuthService {
             throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado.");
         }
 
-        String rol = (request.getRol() != null && !request.getRol().isBlank())
-                ? request.getRol().toUpperCase()
-                : "CLIENTE";
+        // OWASP: Forzar rol CLIENTE en registro público para evitar escalada de privilegios (Mass Assignment)
+        String rol = "CLIENTE";
 
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setNombre(request.getNombre().trim());
