@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { formatCOP } from '../../utils/formatters';
 import {
@@ -21,6 +21,29 @@ import {
 
 export const AdminReportsView: React.FC = () => {
   const { habitaciones, tipos, reservas, cupones, resenas, calcularPrediccionOcupacion } = useHotel();
+  const [selectedMonth, setSelectedMonth] = useState<string>('2026-12');
+
+  // HU-16: Métricas Consolidadas por Mes Calendario
+  const monthlyStats = useMemo(() => {
+    const [year, month] = selectedMonth.split('-');
+    const prefix = `${year}-${month}`;
+
+    const monthReservations = reservas.filter((r) => r.fecha_entrada.startsWith(prefix));
+    const reservasCreadas = monthReservations.length;
+    const canceladas = monthReservations.filter((r) => r.estado === 'CANCELADA').length;
+    const confirmadas = monthReservations.filter((r) => r.estado === 'CONFIRMADA' || r.estado === 'CHECK_IN' || r.estado === 'FINALIZADA').length;
+    const ingresosBrutos = monthReservations
+      .filter((r) => r.estado !== 'CANCELADA')
+      .reduce((acc, r) => acc + r.total, 0);
+
+    return {
+      mesLabel: `${month}/${year}`,
+      reservasCreadas,
+      canceladas,
+      confirmadas,
+      ingresosBrutos,
+    };
+  }, [selectedMonth, reservas]);
 
   // Metrics by Type
   const revenueByType = tipos.map((t) => {
@@ -157,6 +180,46 @@ export const AdminReportsView: React.FC = () => {
           <Download className="w-3.5 h-3.5" />
           <span>Imprimir / Exportar Reporte</span>
         </button>
+      </div>
+
+      {/* HU-16: Selector de Mes Calendario y Consolidado Mensual */}
+      <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-amber-700" />
+            <h2 className="font-display font-bold text-base text-stone-900">
+              Consolidado Mensual Contable y Operativo (HU-16)
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-stone-600">Mes Calendario:</label>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-stone-300 text-xs font-mono-numbers outline-none focus:ring-1 focus:ring-amber-700 bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-stone-50 border border-stone-200">
+            <span className="text-[11px] text-stone-500 block">Reservas Registradas</span>
+            <span className="text-2xl font-bold font-mono-numbers text-stone-900">{monthlyStats.reservasCreadas}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+            <span className="text-[11px] text-emerald-800 block">Efectivas / En Hospedaje</span>
+            <span className="text-2xl font-bold font-mono-numbers text-emerald-900">{monthlyStats.confirmadas}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200">
+            <span className="text-[11px] text-rose-800 block">Cancelaciones</span>
+            <span className="text-2xl font-bold font-mono-numbers text-rose-900">{monthlyStats.canceladas}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+            <span className="text-[11px] text-amber-800 block">Ingresos Brutos Estimados</span>
+            <span className="text-xl font-bold font-mono-numbers text-amber-950">{formatCOP(monthlyStats.ingresosBrutos)}</span>
+          </div>
+        </div>
       </div>
 
       {/* Feature 2: High-Level Occupancy Curve & Daily Occupancy Chart */}

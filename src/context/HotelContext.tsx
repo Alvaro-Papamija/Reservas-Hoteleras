@@ -17,6 +17,8 @@ import {
   MensajeChat,
   PrediccionOcupacionDia,
   ConsentimientoLegal,
+  Pago,
+  MetodoPago,
 } from '../types/hotel';
 import {
   INITIAL_HABITACIONES,
@@ -92,8 +94,13 @@ interface HotelContextType {
     consentimiento_legal?: ConsentimientoLegal;
   }) => { success: boolean; reserva?: Reserva; error?: string };
   
-  cancelarReserva: (idReserva: number, isClientAction?: boolean) => { success: boolean; error?: string };
+  cancelarReserva: (idReserva: number, isClientAction?: boolean, motivo?: string) => { success: boolean; error?: string };
   cambiarEstadoReserva: (idReserva: number, nuevoEstado: EstadoReserva) => { success: boolean; error?: string };
+  modificarFechasReserva: (idReserva: number, nuevaEntrada: string, nuevaSalida: string) => { success: boolean; error?: string };
+  registrarPago: (idReserva: number, monto: number, metodo: MetodoPago) => { success: boolean; error?: string; pago?: Pago };
+  registrarCheckIn: (idReserva: number, numeroLlave: string) => { success: boolean; error?: string };
+  registrarCheckOut: (idReserva: number) => { success: boolean; error?: string };
+  registrarHuesped: (datos: Omit<Cliente, 'id_cliente' | 'id_usuario' | 'fecha_registro'>) => { success: boolean; error?: string; cliente?: Cliente };
   
   // Rooms CRUD
   addHabitacion: (hab: Omit<Habitacion, 'id_habitacion'>) => { success: boolean; error?: string };
@@ -884,8 +891,12 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { success: true, reserva: nuevaReserva };
   };
 
-  // RN05 & HU07: Cancel Reservation
-  const cancelarReserva = (idReserva: number, isClientAction = true): { success: boolean; error?: string } => {
+  // RN05 & HU14: Cancel Reservation with reason
+  const cancelarReserva = (
+    idReserva: number,
+    isClientAction = true,
+    motivo = 'Cancelada por el usuario'
+  ): { success: boolean; error?: string } => {
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
     if (!reserva) {
       return { success: false, error: 'Reserva no encontrada.' };
@@ -922,7 +933,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     setReservas((prev) =>
-      prev.map((r) => (r.id_reserva === idReserva ? { ...r, estado: 'CANCELADA' } : r))
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? { ...r, estado: 'CANCELADA', motivo_cancelacion: motivo }
+          : r
+      )
+    );
+
+    // Liberar habitación a DISPONIBLE si estaba ocupada o reservada
+    setHabitaciones((prev) =>
+      prev.map((h) =>
+        h.id_habitacion === reserva.id_habitacion && (h.estado === 'OCUPADA' || h.estado === 'RESERVADA')
+          ? { ...h, estado: 'DISPONIBLE' }
+          : h
+      )
     );
 
     // Automated Cancellation Notification
@@ -930,7 +954,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id_notificacion: `notif-${Date.now()}-canc`,
       tipo: 'SISTEMA',
       titulo: `Reserva cancelada: ${reserva.codigo}`,
-      mensaje: `La reserva de la Habitación ${reserva.habitacion_numero} (${reserva.fecha_entrada} al ${reserva.fecha_salida}) ha sido cancelada.`,
+      mensaje: `La reserva de la Habitación ${reserva.habitacion_numero} (${reserva.fecha_entrada} al ${reserva.fecha_salida}) ha sido cancelada. Motivo: ${motivo}`,
       fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
       leida: false,
       destinatario_rol: isClientAction ? 'ADMINISTRADOR' : 'CLIENTE',
@@ -941,25 +965,285 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { success: true };
   };
 
-  // HU10: State Machine Transitions (Admin)
-  const cambiarEstadoReserva = (idReserva: number, nuevoEstado: EstadoReserva): { success: boolean; error?: string } => {
-    // RBAC Guard
-    if (currentRole !== 'ADMINISTRADOR') {
-      return { success: false, error: 'Acceso denegado: se requieren permisos de ADMINISTRADOR para modificar el estado de reservas.' };
+  // HU08: Modificación de Fechas de una Reserva Activa
+  const modificarFechasReserva = (
+    idReserva: number,
+    nuevaEntrada: string,
+    nuevaSalida: string
+  ): { success: boolean; error?: string } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: se requieren privilegios de recepción o administración para modificar fechas.' };
     }
 
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
     if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
 
-    const actual = reserva.estado;
+    if (reserva.estado !== 'PENDIENTE' && reserva.estado !== 'CONFIRMADA') {
+      return { success: false, error: `No se pueden modificar las fechas de una reserva en estado ${reserva.estado}.` };
+    }
 
-    // Allowed transitions:
-    // PENDIENTE -> CONFIRMADA, CANCELADA
-    // CONFIRMADA -> FINALIZADA, CANCELADA
-    // CANCELADA / FINALIZADA -> No transitions allowed
+    const start = new Date(nuevaEntrada);
+    const end = new Date(nuevaSalida);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return { success: false, error: 'Las fechas seleccionadas tienen un formato inválido.' };
+    }
+    if (end.getTime() <= start.getTime()) {
+      return { success: false, error: 'La fecha de salida debe ser estrictamente posterior a la fecha de entrada.' };
+    }
+
+    // Verificar colisión con otras reservas excluyendo la actual
+    if (checkOverlap(reserva.id_habitacion, nuevaEntrada, nuevaSalida, idReserva)) {
+      return {
+        success: false,
+        error: 'Las fechas seleccionadas presentan conflicto de ocupación con otra reserva en esta habitación.',
+      };
+    }
+
+    const hab = habitaciones.find((h) => h.id_habitacion === reserva.id_habitacion);
+    const tipo = tipos.find((t) => t.id_tipo === hab?.id_tipo);
+    const precioNoche = tipo?.precio_base || reserva.precio_noche;
+    const { noches, total: subtotal } = calculateTotal(precioNoche, nuevaEntrada, nuevaSalida);
+
+    const descuento = reserva.descuento || 0;
+    const nuevoTotal = Math.max(0, subtotal - descuento);
+    const totalPagado = (reserva.pagos || []).reduce((acc, p) => acc + p.monto, 0);
+    const nuevoSaldo = Math.max(0, nuevoTotal - totalPagado);
+
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? {
+              ...r,
+              fecha_entrada: nuevaEntrada,
+              fecha_salida: nuevaSalida,
+              cantidad_noches: noches,
+              subtotal,
+              total: nuevoTotal,
+              saldo: nuevoSaldo,
+            }
+          : r
+      )
+    );
+
+    return { success: true };
+  };
+
+  // HU10: Registro de Abonos y Liquidación de Saldos
+  const registrarPago = (
+    idReserva: number,
+    monto: number,
+    metodo: MetodoPago
+  ): { success: boolean; error?: string; pago?: Pago } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: solo el personal de recepción o administración puede asentar pagos.' };
+    }
+
+    const reserva = reservas.find((r) => r.id_reserva === idReserva);
+    if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
+
+    if (monto <= 0) {
+      return { success: false, error: 'El monto del pago debe ser mayor a cero pesos.' };
+    }
+
+    const pagosActuales = reserva.pagos || [];
+    const totalPagadoPrevio = pagosActuales.reduce((acc, p) => acc + p.monto, 0);
+    const saldoPendiente = Math.max(0, reserva.total - totalPagadoPrevio);
+
+    if (monto > saldoPendiente) {
+      return {
+        success: false,
+        error: `El abono ingresado ($${monto.toLocaleString('es-CO')} COP) excede el saldo pendiente ($${saldoPendiente.toLocaleString('es-CO')} COP).`,
+      };
+    }
+
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const reciboCaja = `RC-${dateStr}-${randomSuffix}`;
+
+    const nuevoPago: Pago = {
+      id_pago: Date.now(),
+      id_reserva: idReserva,
+      monto,
+      metodo,
+      fecha: new Date().toISOString(),
+      recibo_caja: reciboCaja,
+      registrado_por: currentUser.nombre,
+    };
+
+    const nuevosPagos = [...pagosActuales, nuevoPago];
+    const nuevoTotalPagado = totalPagadoPrevio + monto;
+    const nuevoSaldo = Math.max(0, reserva.total - nuevoTotalPagado);
+
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? {
+              ...r,
+              pagos: nuevosPagos,
+              saldo: nuevoSaldo,
+              estado: r.estado === 'PENDIENTE' ? 'CONFIRMADA' : r.estado,
+            }
+          : r
+      )
+    );
+
+    return { success: true, pago: nuevoPago };
+  };
+
+  // HU11: Check-in con Asignación de Llave Física
+  const registrarCheckIn = (
+    idReserva: number,
+    numeroLlave: string
+  ): { success: boolean; error?: string } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: se requieren permisos de recepción para procesar el Check-in.' };
+    }
+
+    if (!numeroLlave || !numeroLlave.trim()) {
+      return { success: false, error: 'Debe ingresar el número o identificador de la llave física entregada.' };
+    }
+
+    const reserva = reservas.find((r) => r.id_reserva === idReserva);
+    if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
+
+    if (reserva.estado !== 'CONFIRMADA') {
+      return {
+        success: false,
+        error: `Solo se puede ejecutar Check-in sobre reservas CONFIRMADAS (estado actual: ${reserva.estado}).`,
+      };
+    }
+
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? {
+              ...r,
+              estado: 'CHECK_IN',
+              numero_llave: numeroLlave.trim(),
+              fecha_checkin: new Date().toISOString(),
+            }
+          : r
+      )
+    );
+
+    // Habitación pasa a OCUPADA
+    setHabitaciones((prev) =>
+      prev.map((h) =>
+        h.id_habitacion === reserva.id_habitacion
+          ? { ...h, estado: 'OCUPADA' }
+          : h
+      )
+    );
+
+    return { success: true };
+  };
+
+  // HU12: Check-out con Validación de Saldo Cero ($0 COP) y Liberación de Habitación
+  const registrarCheckOut = (idReserva: number): { success: boolean; error?: string } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: se requieren permisos de recepción para procesar el Check-out.' };
+    }
+
+    const reserva = reservas.find((r) => r.id_reserva === idReserva);
+    if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
+
+    if (reserva.estado !== 'CONFIRMADA' && reserva.estado !== 'CHECK_IN') {
+      return {
+        success: false,
+        error: `No se puede procesar el Check-out de una reserva con estado ${reserva.estado}.`,
+      };
+    }
+
+    const totalPagado = (reserva.pagos || []).reduce((acc, p) => acc + p.monto, 0);
+    const saldo = reserva.saldo ?? Math.max(0, reserva.total - totalPagado);
+
+    if (saldo > 0) {
+      return {
+        success: false,
+        error: `No se puede procesar el Check-out: la reserva tiene un saldo pendiente de $${saldo.toLocaleString('es-CO')} COP. Debe liquidar la cuenta primero.`,
+      };
+    }
+
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id_reserva === idReserva
+          ? {
+              ...r,
+              estado: 'FINALIZADA',
+              fecha_checkout: new Date().toISOString(),
+            }
+          : r
+      )
+    );
+
+    // Habitación queda DISPONIBLE
+    setHabitaciones((prev) =>
+      prev.map((h) =>
+        h.id_habitacion === reserva.id_habitacion
+          ? { ...h, estado: 'DISPONIBLE' }
+          : h
+      )
+    );
+
+    return { success: true };
+  };
+
+  // HU05: Registro Manual de Huésped por Recepción
+  const registrarHuesped = (
+    datos: Omit<Cliente, 'id_cliente' | 'id_usuario' | 'fecha_registro'>
+  ): { success: boolean; error?: string; cliente?: Cliente } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: se requieren permisos para registrar huéspedes.' };
+    }
+
+    if (!datos.nombre?.trim() || !datos.apellido?.trim() || !datos.documento?.trim() || !datos.correo?.trim()) {
+      return { success: false, error: 'Nombre, apellido, documento y correo electrónico son obligatorios.' };
+    }
+
+    const docLimpio = datos.documento.trim();
+    if (clientes.some((c) => c.documento === docLimpio)) {
+      return {
+        success: false,
+        error: `Ya existe un huésped registrado con el documento de identidad número ${docLimpio}.`,
+      };
+    }
+
+    const newId = Math.max(0, ...clientes.map((c) => c.id_cliente)) + 1;
+    const nuevoCliente: Cliente = {
+      ...datos,
+      id_cliente: newId,
+      id_usuario: newId + 10,
+      nombre: datos.nombre.trim(),
+      apellido: datos.apellido.trim(),
+      documento: docLimpio,
+      correo: datos.correo.trim().toLowerCase(),
+      telefono: datos.telefono?.trim() || '+57 300 000 0000',
+      fecha_registro: new Date().toISOString(),
+    };
+
+    setClientes((prev) => [...prev, nuevoCliente]);
+    return { success: true, cliente: nuevoCliente };
+  };
+
+  // HU10 / HU12: Máquina de estados de reservas con permisos Staff
+  const cambiarEstadoReserva = (idReserva: number, nuevoEstado: EstadoReserva): { success: boolean; error?: string } => {
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      return { success: false, error: 'Acceso denegado: se requieren permisos de personal para modificar el estado de reservas.' };
+    }
+
+    const reserva = reservas.find((r) => r.id_reserva === idReserva);
+    if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
+
+    // Si se transiciona a FINALIZADA, validar saldo cero y liberar cuarto
+    if (nuevoEstado === 'FINALIZADA') {
+      return registrarCheckOut(idReserva);
+    }
+
+    const actual = reserva.estado;
     const validTransitions: Record<EstadoReserva, EstadoReserva[]> = {
       PENDIENTE: ['CONFIRMADA', 'CANCELADA'],
-      CONFIRMADA: ['FINALIZADA', 'CANCELADA'],
+      CONFIRMADA: ['CHECK_IN', 'FINALIZADA', 'CANCELADA'],
+      CHECK_IN: ['FINALIZADA'],
       CANCELADA: [],
       FINALIZADA: [],
     };
@@ -980,12 +1264,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Room Management (Admin)
   const addHabitacion = (habData: Omit<Habitacion, 'id_habitacion'>): { success: boolean; error?: string } => {
-    // RBAC Guard
     if (currentRole !== 'ADMINISTRADOR') {
       return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para registrar nuevas habitaciones.' };
     }
 
-    // Check unique number
     if (habitaciones.some((h) => h.numero.toLowerCase() === habData.numero.toLowerCase())) {
       return { success: false, error: `Ya existe una habitación registrada con el número ${habData.numero}.` };
     }
@@ -1001,7 +1283,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateHabitacion = (hab: Habitacion): { success: boolean; error?: string } => {
-    // RBAC Guard
     if (currentRole !== 'ADMINISTRADOR') {
       return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para editar habitaciones.' };
     }
@@ -1015,7 +1296,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const cambiarEstadoHabitacion = (idHabitacion: number, nuevoEstado: EstadoHabitacion) => {
-    // RBAC Guard
     if (currentRole !== 'ADMINISTRADOR') return;
 
     setHabitaciones((prev) =>
@@ -1023,9 +1303,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  // HU08: Deactivate logically instead of deleting if future reservations exist
+  // HU04: Desactivación Lógica Real (Soft Delete)
   const toggleHabitacionActiva = (idHabitacion: number): { success: boolean; error?: string } => {
-    // RBAC Guard
     if (currentRole !== 'ADMINISTRADOR') {
       return { success: false, error: 'Acceso denegado: se requieren privilegios de ADMINISTRADOR para cambiar la disponibilidad de habitaciones.' };
     }
@@ -1033,24 +1312,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const hab = habitaciones.find((h) => h.id_habitacion === idHabitacion);
     if (!hab) return { success: false, error: 'Habitación no encontrada.' };
 
-    if (hab.activa) {
-      // Check for future active reservations
-      const today = new Date().toISOString().split('T')[0];
-      const hasFutureReservas = reservas.some(
-        (r) =>
-          r.id_habitacion === idHabitacion &&
-          r.fecha_salida >= today &&
-          (r.estado === 'PENDIENTE' || r.estado === 'CONFIRMADA')
-      );
-
-      if (hasFutureReservas) {
-        return {
-          success: false,
-          error: 'Esta habitación tiene reservas activas programadas. No puede eliminarse, pero ha sido desactivada para no recibir nuevas reservas.',
-        };
-      }
-    }
-
+    // Desactivación lógica efectiva preservando historial
     setHabitaciones((prev) =>
       prev.map((h) => (h.id_habitacion === idHabitacion ? { ...h, activa: !h.activa } : h))
     );
@@ -1111,6 +1373,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createReserva,
         cancelarReserva,
         cambiarEstadoReserva,
+        modificarFechasReserva,
+        registrarPago,
+        registrarCheckIn,
+        registrarCheckOut,
+        registrarHuesped,
         addHabitacion,
         updateHabitacion,
         cambiarEstadoHabitacion,

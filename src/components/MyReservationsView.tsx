@@ -30,6 +30,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA'>('TODAS');
   const [selectedReservaForCancel, setSelectedReservaForCancel] = useState<Reserva | null>(null);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('Cambio de itinerario o planes de viaje');
   const [selectedReservaForEmail, setSelectedReservaForEmail] = useState<Reserva | null>(null);
   const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
   const [ratingStars, setRatingStars] = useState(5);
@@ -52,7 +53,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
     if (!selectedReservaForCancel) return;
     setCancelError(null);
 
-    const result = cancelarReserva(selectedReservaForCancel.id_reserva, true);
+    const result = cancelarReserva(selectedReservaForCancel.id_reserva, true, motivoCancelacion);
     if (result.success) {
       setCancelSuccessMsg(`La reserva ${selectedReservaForCancel.codigo} ha sido cancelada satisfactoriamente.`);
       setSelectedReservaForCancel(null);
@@ -442,6 +443,23 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                 {cancelError}
               </div>
             )}
+
+            <div className="mb-4">
+              <label className="text-[11px] font-semibold text-stone-700 block mb-1">
+                Motivo de la Cancelación (Requerido)
+              </label>
+              <select
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
+              >
+                <option value="Cambio de itinerario o planes de viaje">Cambio de itinerario o planes de viaje</option>
+                <option value="Motivos de salud o fuerza mayor">Motivos de salud o fuerza mayor</option>
+                <option value="Encontré otra opción de hospedaje">Encontré otra opción de hospedaje</option>
+                <option value="Inconvenientes laborales">Inconvenientes laborales</option>
+                <option value="Otro motivo">Otro motivo</option>
+              </select>
+            </div>
 
             <div className="p-3 bg-stone-50 rounded-xl text-[11px] text-stone-500 mb-6">
               Esta acción liberará inmediatamente la habitación en el sistema para que otros viajeros puedan reservarla.

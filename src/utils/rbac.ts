@@ -28,6 +28,15 @@ export const ROLE_PERMISSIONS: Record<RolUsuario, readonly AppView[]> = {
     'disponibilidad',
     'mis-reservas',
   ],
+  RECEPCIONISTA: [
+    'admin-reservas',
+    'admin-calendario',
+    'admin-clientes',
+    'inicio',
+    'habitaciones',
+    'disponibilidad',
+    'mis-reservas',
+  ],
   CLIENTE: [
     'inicio',
     'habitaciones',
@@ -46,14 +55,11 @@ export const PUBLIC_VIEWS: readonly AppView[] = [
 ];
 
 /**
- * Vistas de gestión exclusiva para administradores
+ * Vistas de gestión exclusiva para administradores (excluidas para recepcionistas y clientes)
  */
 export const ADMIN_EXCLUSIVE_VIEWS: readonly AppView[] = [
   'admin-dashboard',
   'admin-habitaciones',
-  'admin-reservas',
-  'admin-calendario',
-  'admin-clientes',
   'admin-reportes',
 ];
 
@@ -88,8 +94,15 @@ export function hasAdminPrivilege(role: RolUsuario): boolean {
 }
 
 /**
+ * Comprueba si el rol actual tiene privilegios de personal (Admin o Recepcionista)
+ */
+export function hasStaffPrivilege(role: RolUsuario): boolean {
+  return role === 'ADMINISTRADOR' || role === 'RECEPCIONISTA';
+}
+
+/**
  * Valida si un usuario tiene permiso para cancelar una reserva específica
- * - Administradores pueden cancelar cualquier reserva
+ * - Administradores y Recepcionistas pueden cancelar cualquier reserva operativa
  * - Clientes solo pueden cancelar sus propias reservas
  */
 export function canCancelReservation(
@@ -97,7 +110,7 @@ export function canCancelReservation(
   userEmail: string,
   reserva: Pick<Reserva, 'cliente_correo'>
 ): boolean {
-  if (role === 'ADMINISTRADOR') return true;
+  if (role === 'ADMINISTRADOR' || role === 'RECEPCIONISTA') return true;
   if (!userEmail) return false;
   return userEmail.trim().toLowerCase() === reserva.cliente_correo.trim().toLowerCase();
 }

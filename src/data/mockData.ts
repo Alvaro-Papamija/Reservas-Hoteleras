@@ -399,6 +399,13 @@ export const INITIAL_USUARIOS: Usuario[] = [
     rol: 'CLIENTE',
     estado: true,
   },
+  {
+    id_usuario: 4,
+    nombre: 'Carolina Méndez (Recepción)',
+    correo: 'recepcion@hotelalborada.com',
+    rol: 'RECEPCIONISTA',
+    estado: true,
+  },
 ];
 
 export const INITIAL_CLIENTES: Cliente[] = [
