@@ -361,13 +361,21 @@ export class AuthService {
   }
 
   /**
-   * Registro de nuevo usuario.
+   * Registro de nuevo usuario con validación de política de tratamiento de datos (Ley 1581).
    */
   static async register(
     nombre: string,
     email: string,
-    password: string
+    password: string,
+    aceptaPoliticaDatos: boolean = true
   ): Promise<AuthSessionResponse> {
+    if (!aceptaPoliticaDatos) {
+      return {
+        success: false,
+        error: 'Debe aceptar la política de tratamiento de datos personales (Ley 1581 de 2012) para registrarse.',
+      };
+    }
+
     const nameVal = this.validateName(nombre);
     if (!nameVal.valid) return { success: false, error: nameVal.error };
 

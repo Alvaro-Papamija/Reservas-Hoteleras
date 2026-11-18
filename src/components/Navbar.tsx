@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
         <div className="flex items-center justify-between h-20 gap-3 xl:gap-6">
           {/* Zone 1: Brand Wordmark (1 element, single line) */}
           <button
-            onClick={() => setActiveView(currentRole === 'ADMINISTRADOR' ? 'admin-dashboard' : 'inicio')}
+            onClick={() => setActiveView(currentRole === 'ADMINISTRADOR' ? 'admin-dashboard' : currentRole === 'RECEPCIONISTA' ? 'admin-reservas' : 'inicio')}
             className="flex items-center gap-2 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 rounded-lg shrink-0"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-700 text-amber-50 flex items-center justify-center shadow-sm group-hover:bg-amber-800 transition-colors">
@@ -104,6 +104,41 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                     )}
                   </button>
                 )}
+              </>
+            ) : currentRole === 'RECEPCIONISTA' ? (
+              <>
+                <button
+                  onClick={() => setActiveView('admin-reservas')}
+                  className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                    activeView === 'admin-reservas' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                  }`}
+                >
+                  Front-Desk (Reservas)
+                </button>
+                <button
+                  onClick={() => setActiveView('admin-calendario')}
+                  className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                    activeView === 'admin-calendario' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                  }`}
+                >
+                  Calendario
+                </button>
+                <button
+                  onClick={() => setActiveView('admin-clientes')}
+                  className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                    activeView === 'admin-clientes' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                  }`}
+                >
+                  Huéspedes
+                </button>
+                <button
+                  onClick={() => setActiveView('disponibilidad')}
+                  className={`hover:text-amber-800 transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 ${
+                    activeView === 'disponibilidad' ? 'border-amber-700 text-stone-900 font-semibold' : 'border-transparent'
+                  }`}
+                >
+                  Disponibilidad
+                </button>
               </>
             ) : (
               <>
@@ -247,6 +282,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
                 }`}
               >
                 Huésped
+              </button>
+              <button
+                onClick={() => {
+                  switchRole('RECEPCIONISTA');
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-xs px-2.5 py-1 rounded ${
+                  currentRole === 'RECEPCIONISTA' ? 'bg-blue-700 text-white font-medium' : 'bg-stone-200 text-stone-700'
+                }`}
+              >
+                Recepción
               </button>
               <button
                 onClick={() => {

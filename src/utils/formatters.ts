@@ -38,6 +38,13 @@ export const getEstadoReservaColor = (estado: string) => {
         border: 'border-emerald-200 dark:border-emerald-800/60',
         label: 'Confirmada',
       };
+    case 'CHECK_IN':
+      return {
+        bg: 'bg-blue-50 dark:bg-blue-950/40',
+        text: 'text-blue-800 dark:text-blue-300',
+        border: 'border-blue-200 dark:border-blue-800/60',
+        label: 'En Hospedaje (Check-in)',
+      };
     case 'FINALIZADA':
       return {
         bg: 'bg-stone-100 dark:bg-stone-900',

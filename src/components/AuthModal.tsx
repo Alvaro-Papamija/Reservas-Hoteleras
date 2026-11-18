@@ -544,6 +544,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    switchRole('RECEPCIONISTA');
+                    onClose();
+                  }}
+                  className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-700 text-white flex items-center justify-center font-bold text-[10px]">
+                      REC
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-stone-900">Carolina Méndez (Recepción)</div>
+                      <div className="text-[10px] text-stone-500">recepcion@hotelalborada.com · Front-Desk</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
                     switchRole('CLIENTE');
                     login('laura.gomez@ejemplo.com', 'Cliente123*');
                     onClose();
