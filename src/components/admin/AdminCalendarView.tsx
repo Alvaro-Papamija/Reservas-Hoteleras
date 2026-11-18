@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Habitacion, Reserva } from '../../types/hotel';
 import { formatCOP, formatDateDMY, getEstadoReservaColor } from '../../utils/formatters';
@@ -14,6 +14,7 @@ import {
   Clock,
   Sparkles,
   Search,
+  X,
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -32,6 +33,18 @@ export const AdminCalendarView: React.FC = () => {
   const [selectedPiso, setSelectedPiso] = useState<number | 'TODOS'>('TODOS');
   const [selectedTipo, setSelectedTipo] = useState<number | 'TODOS'>('TODOS');
   const [selectedReserva, setSelectedReserva] = useState<Reserva | null>(null);
+
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!selectedReserva) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedReserva(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedReserva]);
 
   // Calculate days in the selected month
   const daysInMonth = useMemo(() => {
@@ -369,8 +382,19 @@ export const AdminCalendarView: React.FC = () => {
 
       {/* Reservation Details Drawer/Modal */}
       {selectedReserva && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReserva(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalle de Reserva"
+        >
+          <div
+            className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-stone-100 mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
@@ -385,9 +409,19 @@ export const AdminCalendarView: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold border ${getEstadoReservaColor(selectedReserva.estado).bg} ${getEstadoReservaColor(selectedReserva.estado).text} ${getEstadoReservaColor(selectedReserva.estado).border}`}>
-                {selectedReserva.estado}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2.5 py-1 rounded-md font-semibold border ${getEstadoReservaColor(selectedReserva.estado).bg} ${getEstadoReservaColor(selectedReserva.estado).text} ${getEstadoReservaColor(selectedReserva.estado).border}`}>
+                  {selectedReserva.estado}
+                </span>
+                <button
+                  onClick={() => setSelectedReserva(null)}
+                  className="p-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                  aria-label="Cerrar modal"
+                  title="Cerrar (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-xs text-stone-600 mb-5">

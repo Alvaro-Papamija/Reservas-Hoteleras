@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Reserva } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
 import { generarComprobantePDF } from '../utils/pdfGenerator';
@@ -30,6 +30,17 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(reserva.codigo);
     setCopied(true);
@@ -46,13 +57,22 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-stone-950/80 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/80 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Correo de Confirmación de Reserva"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-8"
+        className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Window Header */}
         <div className="bg-stone-900 text-white px-6 py-4 flex items-center justify-between border-b border-stone-800">

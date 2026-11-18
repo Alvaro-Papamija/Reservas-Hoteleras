@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../context/HotelContext';
 import { Habitacion, RecomendacionIAQuery, RecomendacionIAResult } from '../types/hotel';
 import { formatCOP } from '../utils/formatters';
@@ -42,6 +42,18 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
   const [hasCalculated, setHasCalculated] = useState<boolean>(false);
   const [results, setResults] = useState<RecomendacionIAResult[]>([]);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleTogglePref = (pref: string) => {
@@ -65,43 +77,57 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-stone-950/70 backdrop-blur-xs overflow-y-auto">
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Recomendador de Habitaciones con IA"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
-          className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative my-8"
+          className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-stone-200 relative my-auto overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-            aria-label="Cerrar recomendador"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-amber-700 text-amber-100 flex items-center justify-center shadow-xs">
-              <Sparkles className="w-5 h-5 text-amber-200" />
-            </div>
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-widest text-amber-800">
-                Alborada Intelligence Engine
+          {/* Header Fijo / Siempre Visible */}
+          <div className="bg-[#FAF8F5] px-6 sm:px-8 py-4 sm:py-5 border-b border-stone-200 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-700 text-amber-100 flex items-center justify-center shadow-xs">
+                <Sparkles className="w-5 h-5 text-amber-200" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-stone-900">
-                Recomendador de Habitaciones con IA
-              </h2>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-amber-800">
+                  Alborada Intelligence Engine
+                </div>
+                <h2 className="text-lg sm:text-xl font-display font-bold text-stone-900">
+                  Recomendador de Habitaciones con IA
+                </h2>
+              </div>
             </div>
+
+            {/* Botón Cerrar Siempre Accesible */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors"
+              aria-label="Cerrar recomendador"
+              title="Cerrar ventana (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <p className="text-xs text-stone-600 mb-6 leading-relaxed">
-            Cuéntanos sobre tu viaje y nuestro algoritmo de hospitalidad analizará disponibilidad, características, amenidades y opiniones para recomendarte la suite perfecta.
-          </p>
+          {/* Cuerpo Desplazable */}
+          <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Cuéntanos sobre tu viaje y nuestro algoritmo de hospitalidad analizará disponibilidad, características, amenidades y opiniones para recomendarte la suite perfecta.
+            </p>
 
-          {/* Form */}
-          <form onSubmit={handleCalculate} className="space-y-5">
+            {/* Form */}
+            <form onSubmit={handleCalculate} className="space-y-5">
             {/* 1. Motivo del viaje */}
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-stone-700 block mb-2">
@@ -325,6 +351,23 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
               </div>
             </div>
           )}
+          </div>
+
+          {/* Footer Fijo con Botón de Cierre Secundario */}
+          <div className="px-6 py-3.5 bg-stone-50 border-t border-stone-200 flex items-center justify-between shrink-0 text-xs">
+            <span className="text-stone-400 text-[11px] hidden sm:inline">
+              Puedes presionar <kbd className="px-1.5 py-0.5 bg-white border border-stone-300 rounded text-stone-600 font-mono text-[10px]">Esc</kbd> o hacer clic fuera para salir
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl border border-stone-300 bg-white hover:bg-stone-100 text-stone-700 font-semibold transition-colors shadow-xs"
+              >
+                Cerrar Ventana
+              </button>
+            </div>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>

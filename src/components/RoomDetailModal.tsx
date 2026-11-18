@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../context/HotelContext';
 import { Habitacion } from '../types/hotel';
 import { formatCOP, getEstadoHabitacionColor } from '../utils/formatters';
@@ -82,6 +82,18 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
   const [fechaSalida, setFechaSalida] = useState('2026-12-18');
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!habitacion) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [habitacion, onClose]);
+
   if (!habitacion) return null;
 
   const tipo = tipos.find((t) => t.id_tipo === habitacion.id_tipo);
@@ -108,13 +120,22 @@ export const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs">
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalle de Habitación ${habitacion.numero}`}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-8"
+          className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Cliente, Reserva } from '../../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable } from '../../utils/formatters';
@@ -22,6 +22,18 @@ export const AdminClientsView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const [showModalCrear, setShowModalCrear] = useState(false);
+
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedClient) setSelectedClient(null);
+        if (showModalCrear) setShowModalCrear(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedClient, showModalCrear]);
 
   const [formNombre, setFormNombre] = useState('');
   const [formApellido, setFormApellido] = useState('');
@@ -204,8 +216,19 @@ export const AdminClientsView: React.FC = () => {
 
       {/* Client History Modal */}
       {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto space-y-6">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedClient(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Historial de Cliente"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto space-y-6 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-stone-200">
               <div>
                 <h3 className="text-xl font-display font-bold text-stone-900">
@@ -276,8 +299,19 @@ export const AdminClientsView: React.FC = () => {
 
       {/* Modal HU-05: Registrar Nuevo Huésped (Walk-in) */}
       {showModalCrear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModalCrear(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Registrar Nuevo Huésped"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-4 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center">

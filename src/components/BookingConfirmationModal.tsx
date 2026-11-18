@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Reserva } from '../types/hotel';
 import { formatCOP, formatDateDMY } from '../utils/formatters';
 import { generarComprobantePDF } from '../utils/pdfGenerator';
@@ -15,6 +15,7 @@ import {
   Sparkles,
   Download,
   Mail,
+  X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -32,6 +33,17 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   const [copied, setCopied] = React.useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onContinueBrowsing();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onContinueBrowsing]);
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(reserva.codigo);
     setCopied(true);
@@ -47,15 +59,34 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-stone-950/80 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/80 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onContinueBrowsing();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmación de Reserva"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-8"
+        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Success Header with Warm Terracotta/Amber accent */}
         <div className="bg-gradient-to-br from-amber-800 to-stone-900 text-white p-6 sm:p-8 text-center relative">
+          {/* Botón Cerrar (X) Superior */}
+          <button
+            onClick={onContinueBrowsing}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/25 hover:bg-black/50 text-white/80 hover:text-white flex items-center justify-center transition-colors border border-white/20"
+            aria-label="Cerrar confirmación"
+            title="Cerrar (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center mx-auto mb-4 border border-white/20">
             <CheckCircle2 className="w-10 h-10 text-emerald-400" />
           </div>

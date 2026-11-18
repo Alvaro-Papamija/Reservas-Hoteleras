@@ -35,6 +35,18 @@ export const LegalModal: React.FC<LegalModalProps> = ({
     }
   }, [isOpen, initialDoc]);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const currentDoc = LEGAL_DOCUMENTS[activeDoc];
@@ -52,13 +64,22 @@ export const LegalModal: React.FC<LegalModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Documentación Jurídica Oficial"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.18 }}
           className="bg-white rounded-3xl max-w-4xl w-full h-[90vh] max-h-[850px] shadow-2xl border border-stone-200 flex flex-col overflow-hidden my-auto"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="bg-[#FAF8F5] px-6 py-4 border-b border-stone-200 flex items-center justify-between shrink-0">

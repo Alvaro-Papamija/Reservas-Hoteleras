@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Reserva, EstadoReserva, MetodoPago } from '../../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable, getEstadoReservaColor } from '../../utils/formatters';
@@ -60,6 +60,21 @@ export const AdminReservationsView: React.FC = () => {
   const [nuevaEntrada, setNuevaEntrada] = useState<string>('');
   const [nuevaSalida, setNuevaSalida] = useState<string>('');
   const [modificarError, setModificarError] = useState<string | null>(null);
+
+  // Accesibilidad: Cerrar cualquier modal abierto con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showEmailModal) setShowEmailModal(false);
+        if (reservaParaPago) setReservaParaPago(null);
+        if (reservaParaCheckIn) setReservaParaCheckIn(null);
+        if (reservaParaModificar) setReservaParaModificar(null);
+        if (selectedReserva) setSelectedReserva(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showEmailModal, reservaParaPago, reservaParaCheckIn, reservaParaModificar, selectedReserva]);
 
   const getSaldo = (r: Reserva): number => {
     const totalPagado = (r.pagos || []).reduce((acc, p) => acc + p.monto, 0);
@@ -409,8 +424,19 @@ export const AdminReservationsView: React.FC = () => {
 
       {/* Modal HU-10: Registrar Pago / Abono */}
       {reservaParaPago && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReservaParaPago(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Registrar Pago en Counter"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-4 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center">
@@ -499,8 +525,19 @@ export const AdminReservationsView: React.FC = () => {
 
       {/* Modal HU-11: Check-in con Llave Física */}
       {reservaParaCheckIn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReservaParaCheckIn(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Check-in de Huésped"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
@@ -564,8 +601,19 @@ export const AdminReservationsView: React.FC = () => {
 
       {/* Modal HU-08: Modificar Fechas */}
       {reservaParaModificar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReservaParaModificar(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Modificar Fechas de Reserva"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center">
@@ -640,8 +688,19 @@ export const AdminReservationsView: React.FC = () => {
 
       {/* Reservation Detail Modal */}
       {selectedReserva && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-5 max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReserva(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalle de Reserva"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-5 max-h-[85vh] overflow-y-auto relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-stone-200">
               <div>
                 <span className="text-xs text-stone-400 font-mono-numbers">
