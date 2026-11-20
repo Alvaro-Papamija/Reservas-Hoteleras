@@ -38,9 +38,24 @@ export default defineConfig(() => {
     server: {
       proxy: {
         '/api': {
-          target: process.env.VITE_BACKEND_URL || 'http://localhost:8080',
+          target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8080',
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('error', (_err, _req, res: any) => {
+              if (res && typeof res.writeHead === 'function' && !res.headersSent) {
+                res.writeHead(503, {
+                  'Content-Type': 'application/json',
+                });
+                res.end(
+                  JSON.stringify({
+                    status: 'OFFLINE',
+                    mensaje: 'Backend Spring Boot no disponible en puerto 8080. Modo local resiliente activo.',
+                  })
+                );
+              }
+            });
+          },
         },
       },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
