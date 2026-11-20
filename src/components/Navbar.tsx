@@ -12,6 +12,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { ApiStatusIndicator } from './ApiStatusIndicator';
 
 interface NavbarProps {
   onOpenAuth: () => void;
@@ -196,6 +197,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
 
           {/* Zone 3: 1 Primary Action + Quick Role Switcher for Evaluation */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* API Health & Integration Pill */}
+            <ApiStatusIndicator className="hidden md:inline-flex" />
+
             {/* Quick Role Simulator Toggle */}
             <div className="hidden sm:flex items-center p-0.5 sm:p-1 bg-stone-200/70 rounded-xl text-[11px] sm:text-xs font-medium">
               <button

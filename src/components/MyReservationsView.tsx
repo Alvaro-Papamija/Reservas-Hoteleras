@@ -18,6 +18,9 @@ import {
   Download,
   Mail,
   Star,
+  CreditCard,
+  Building,
+  Lock,
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -27,12 +30,15 @@ interface MyReservationsViewProps {
 }
 
 export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExploreRooms }) => {
-  const { reservas, currentUser, cancelarReserva, calificarReserva } = useHotel();
+  const { reservas, currentUser, cancelarReserva, calificarReserva, registrarPago } = useHotel();
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA'>('TODAS');
   const [selectedReservaForCancel, setSelectedReservaForCancel] = useState<Reserva | null>(null);
   const [motivoCancelacion, setMotivoCancelacion] = useState('Cambio de itinerario o planes de viaje');
   const [selectedReservaForEmail, setSelectedReservaForEmail] = useState<Reserva | null>(null);
+  const [selectedReservaForPayment, setSelectedReservaForPayment] = useState<Reserva | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'TARJETA' | 'TRANSFERENCIA'>('TARJETA');
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
 
   // Accesibilidad: Cerrar modales abiertos con tecla Escape
   useEffect(() => {
@@ -41,11 +47,12 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
         if (selectedReservaForRating) setSelectedReservaForRating(null);
         if (selectedReservaForCancel) setSelectedReservaForCancel(null);
         if (selectedReservaForEmail) setSelectedReservaForEmail(null);
+        if (selectedReservaForPayment) setSelectedReservaForPayment(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedReservaForRating, selectedReservaForCancel, selectedReservaForEmail]);
+  }, [selectedReservaForRating, selectedReservaForCancel, selectedReservaForEmail, selectedReservaForPayment]);
   const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
   const [ratingStars, setRatingStars] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
@@ -90,6 +97,18 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
       setRatingSuccessMsg(`Gracias por tu opinión sobre la Habitación ${selectedReservaForRating.habitacion_numero}.`);
       setSelectedReservaForRating(null);
       setTimeout(() => setRatingSuccessMsg(null), 5000);
+    }
+  };
+
+  const handleConfirmPayment = () => {
+    if (!selectedReservaForPayment) return;
+    const totalPagado = (selectedReservaForPayment.pagos || []).reduce((acc, p) => acc + p.monto, 0);
+    const saldo = selectedReservaForPayment.saldo ?? Math.max(0, selectedReservaForPayment.total - totalPagado);
+    const result = registrarPago(selectedReservaForPayment.id_reserva, saldo, paymentMethod);
+    if (result.success) {
+      setPaymentSuccessMsg(`Pago de ${formatCOP(saldo)} liquidado exitosamente para la reserva ${selectedReservaForPayment.codigo}.`);
+      setSelectedReservaForPayment(null);
+      setTimeout(() => setPaymentSuccessMsg(null), 5000);
     }
   };
 
@@ -234,9 +253,18 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
                   <div className="text-left sm:text-right">
                     <span className="text-xs text-stone-400 block">Total liquidado</span>
-                    <span className="text-xl font-bold text-amber-900 font-mono-numbers">
+                    <span className="text-xl font-bold text-amber-900 font-mono-numbers block">
                       {formatCOP(reserva.total)}
                     </span>
+                    {(reserva.saldo !== undefined && reserva.saldo > 0) ? (
+                      <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 inline-block mt-1">
+                        Saldo: {formatCOP(reserva.saldo)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-1">
+                        ✓ 100% Pagada
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -293,6 +321,18 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                       <Mail className="w-3.5 h-3.5 text-amber-700" />
                       <span>Ver Correo</span>
                     </button>
+
+                    {/* Botón Pagar Saldo si tiene saldo pendiente */}
+                    {(reserva.saldo !== undefined ? reserva.saldo > 0 : reserva.total > 0) && reserva.estado !== 'CANCELADA' && (
+                      <button
+                        onClick={() => setSelectedReservaForPayment(reserva)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors shadow-xs"
+                        title="Pagar saldo pendiente con pasarela en línea"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Pagar Saldo</span>
+                      </button>
+                    )}
 
                     {/* Calificar estancia */}
                     {reserva.calificacion ? (
@@ -532,6 +572,125 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                 className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition-colors"
               >
                 Sí, cancelar reserva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pago de Saldo en Línea */}
+      {selectedReservaForPayment && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReservaForPayment(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Liquidación de Pago en Línea"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200 relative my-auto sm:my-8 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-700 text-emerald-100 flex items-center justify-center font-bold text-xs">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-stone-900 leading-tight">
+                    Pagar Saldo de Reserva
+                  </h3>
+                  <span className="text-xs text-stone-500 font-mono-numbers">
+                    {selectedReservaForPayment.codigo} · Hab. {selectedReservaForPayment.habitacion_numero}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedReservaForPayment(null)}
+                className="p-1.5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                aria-label="Cerrar modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Resumen del Saldo */}
+            <div className="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/80 space-y-1.5">
+              <div className="flex justify-between text-xs text-stone-600">
+                <span>Total de la Estancia:</span>
+                <span className="font-mono-numbers">{formatCOP(selectedReservaForPayment.total)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-stone-600">
+                <span>Pagos Realizados:</span>
+                <span className="font-mono-numbers text-emerald-700 font-semibold">
+                  {formatCOP((selectedReservaForPayment.pagos || []).reduce((acc, p) => acc + p.monto, 0))}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-amber-200 flex justify-between items-baseline">
+                <span className="text-xs font-bold text-stone-900">Saldo Pendiente a Liquidar:</span>
+                <span className="text-lg font-bold text-amber-950 font-mono-numbers">
+                  {formatCOP(selectedReservaForPayment.saldo ?? (selectedReservaForPayment.total - (selectedReservaForPayment.pagos || []).reduce((acc, p) => acc + p.monto, 0)))}
+                </span>
+              </div>
+            </div>
+
+            {/* Selector de Método de Pago */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">
+                Selecciona la Pasarela de Pago
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('TARJETA')}
+                  className={`p-3 rounded-xl border text-left transition-all flex items-center gap-2 ${
+                    paymentMethod === 'TARJETA'
+                      ? 'border-emerald-700 bg-emerald-50/50 text-emerald-950 ring-1 ring-emerald-700 font-semibold'
+                      : 'border-stone-200 hover:bg-stone-50 text-stone-600'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <span className="text-xs">Tarjeta Crédito / Débito</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('TRANSFERENCIA')}
+                  className={`p-3 rounded-xl border text-left transition-all flex items-center gap-2 ${
+                    paymentMethod === 'TRANSFERENCIA'
+                      ? 'border-emerald-700 bg-emerald-50/50 text-emerald-950 ring-1 ring-emerald-700 font-semibold'
+                      : 'border-stone-200 hover:bg-stone-50 text-stone-600'
+                  }`}
+                >
+                  <Building className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <span className="text-xs">PSE / Nequi / Bancolombia</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 bg-stone-50 rounded-xl text-[11px] text-stone-500 leading-relaxed flex items-center gap-2">
+              <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Transacción protegida por pasarela con cifrado bancario SHA-256. Genera recibo de caja oficial.</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setSelectedReservaForPayment(null)}
+                className="px-4 py-2 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 text-xs font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPayment}
+                className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Confirmar Pago</span>
               </button>
             </div>
           </div>

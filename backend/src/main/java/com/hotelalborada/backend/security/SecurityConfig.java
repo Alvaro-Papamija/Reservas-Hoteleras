@@ -76,9 +76,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PATCH, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.DELETE, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
-                // Clientes y Pagos en Counter gestionados por Recepción y Administración
-                .requestMatchers("/api/clientes/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                // Registro y consulta de pagos vinculados a reservas (acceso autenticado para clientes y administradores)
+                .requestMatchers(HttpMethod.POST, "/api/pagos").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/pagos/reserva/**").authenticated()
                 .requestMatchers("/api/pagos/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                // Clientes: creación y consulta propia permitida a usuarios autenticados; listado general para staff
+                .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/clientes/{id}").authenticated()
+                .requestMatchers("/api/clientes/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                 // Rutas administrativas protegidas por rol
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
                 // Rutas que requieren sesión activa válida (reservas, perfil me)

@@ -32,6 +32,7 @@ import {
   FAQ_ITEMS,
 } from '../data/mockData';
 import { AuthService, AuthSessionResponse } from '../utils/authService';
+import { hotelApi } from '../services/hotelApiService';
 
 interface BookingValidationResult {
   valid: boolean;
@@ -53,8 +54,10 @@ interface HotelContextType {
   isAuthenticated: boolean;
   currentCliente: Cliente | null;
   activeView: 'inicio' | 'habitaciones' | 'disponibilidad' | 'mis-reservas' | 'admin-dashboard' | 'admin-habitaciones' | 'admin-reservas' | 'admin-clientes' | 'admin-reportes' | 'admin-calendario';
-  
+  isApiConnected: boolean;
+
   // Actions
+  verificarConexionApi: () => Promise<boolean>;
   setActiveView: (view: any) => void;
   switchRole: (role: RolUsuario) => void;
   loginAs: (email: string) => boolean;
@@ -212,6 +215,49 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('alborada_notificaciones', JSON.stringify(notificaciones));
   }, [notificaciones]);
+
+  // API Backend Connectivity State & Synchronization
+  const [isApiConnected, setIsApiConnected] = useState<boolean>(false);
+
+  const verificarConexionApi = async (): Promise<boolean> => {
+    try {
+      const ok = await hotelApi.checkHealth();
+      setIsApiConnected(ok);
+      return ok;
+    } catch {
+      setIsApiConnected(false);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    verificarConexionApi().then((online) => {
+      if (isMounted && online) {
+        hotelApi.getHabitaciones().then((apiHabs) => {
+          if (isMounted && apiHabs && apiHabs.length > 0) {
+            setHabitaciones((prev) => {
+              const map = new Map(prev.map((h) => [h.id_habitacion, h]));
+              apiHabs.forEach((ah) => {
+                const existing = map.get(ah.idHabitacion);
+                if (existing) {
+                  map.set(ah.idHabitacion, {
+                    ...existing,
+                    estado: ah.estado as any,
+                    activa: ah.activa,
+                  });
+                }
+              });
+              return Array.from(map.values());
+            });
+          }
+        }).catch(() => {});
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Current client helper
   const currentCliente = clientes.find((c) => c.correo === currentUser.correo) || null;
@@ -862,6 +908,27 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setReservas((prev) => [nuevaReserva, ...prev]);
 
+    // Persistencia integrada en API REST (sincronización en segundo plano con fallback transparente)
+    hotelApi.crearReserva({
+      idHabitacion: hab.id_habitacion,
+      idCliente: targetCliente.id_cliente,
+      fechaEntrada: fecha_entrada,
+      fechaSalida: fecha_salida,
+      cantidadHuespedes: cantidad_huespedes,
+      notas: notas || '',
+      cuponCodigo: cupon_codigo,
+    }).then((apiRes) => {
+      if (apiRes && apiRes.idReserva) {
+        setReservas((prev) =>
+          prev.map((r) =>
+            r.codigo === codigo ? { ...r, id_reserva: apiRes.idReserva } : r
+          )
+        );
+      }
+    }).catch(() => {
+      // Modo local resiliente activo
+    });
+
     // Automated Notifications Dispatch
     const notifCli: Notificacion = {
       id_notificacion: `notif-${Date.now()}-c`,
@@ -939,6 +1006,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : r
       )
     );
+
+    // Persistencia integrada en API REST
+    hotelApi.cancelarReserva(idReserva, { motivo }).catch(() => {});
 
     // Liberar habitación a DISPONIBLE si estaba ocupada o reservada
     setHabitaciones((prev) =>
@@ -1034,12 +1104,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     monto: number,
     metodo: MetodoPago
   ): { success: boolean; error?: string; pago?: Pago } => {
-    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
-      return { success: false, error: 'Acceso denegado: solo el personal de recepción o administración puede asentar pagos.' };
-    }
-
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
     if (!reserva) return { success: false, error: 'Reserva no encontrada.' };
+
+    if (currentRole !== 'ADMINISTRADOR' && currentRole !== 'RECEPCIONISTA') {
+      const isOwner = currentUser?.correo && reserva.cliente_correo.trim().toLowerCase() === currentUser.correo.trim().toLowerCase();
+      if (!isOwner) {
+        return { success: false, error: 'Acceso denegado: solo el personal del hotel o el titular de la reserva pueden asentar pagos.' };
+      }
+    }
 
     if (monto <= 0) {
       return { success: false, error: 'El monto del pago debe ser mayor a cero pesos.' };
@@ -1086,6 +1159,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : r
       )
     );
+
+    // Persistencia integrada en API REST
+    hotelApi.registrarPago({
+      idReserva,
+      monto,
+      metodo,
+      referencia: reciboCaja,
+    }).catch(() => {});
 
     return { success: true, pago: nuevoPago };
   };
@@ -1134,6 +1215,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : h
       )
     );
+
+    // Persistencia integrada en API REST
+    hotelApi.registrarCheckIn(idReserva, { numeroLlave: numeroLlave.trim() }).catch(() => {});
 
     return { success: true };
   };
@@ -1350,6 +1434,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isAuthenticated,
         currentCliente,
         activeView,
+        isApiConnected,
+        verificarConexionApi,
         setActiveView,
         switchRole,
         loginAs,
