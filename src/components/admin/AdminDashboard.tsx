@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { formatCOP, formatDateDMY, getEstadoReservaColor, getEstadoHabitacionColor } from '../../utils/formatters';
 import {
@@ -35,6 +35,24 @@ export const AdminDashboard: React.FC = () => {
   const totalIngresos = reservas
     .filter((r) => r.estado !== 'CANCELADA')
     .reduce((acc, r) => acc + r.total, 0);
+
+  const ingresosPorMetodo = useMemo(() => {
+    let efectivo = 0;
+    let tarjeta = 0;
+    let transferencia = 0;
+
+    reservas.forEach((r) => {
+      if (r.estado === 'CANCELADA') return;
+      (r.pagos || []).forEach((p) => {
+        if (p.metodo === 'EFECTIVO') efectivo += p.monto;
+        else if (p.metodo === 'TARJETA') tarjeta += p.monto;
+        else if (p.metodo === 'TRANSFERENCIA') transferencia += p.monto;
+      });
+    });
+
+    const totalRecaudado = efectivo + tarjeta + transferencia;
+    return { efectivo, tarjeta, transferencia, totalRecaudado };
+  }, [reservas]);
 
   const pendientesCount = reservas.filter((r) => r.estado === 'PENDIENTE').length;
   const confirmadasCount = reservas.filter((r) => r.estado === 'CONFIRMADA').length;
@@ -152,6 +170,39 @@ export const AdminDashboard: React.FC = () => {
             </div>
             <div className="text-[11px] text-emerald-700 font-medium mt-1">
               {reservas.length} reservas registradas
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5 / Breakdown: Recaudo por Medio de Pago (HU-15) */}
+        <div className="bg-white rounded-2xl p-5 border border-stone-200/90 shadow-xs flex flex-col justify-between col-span-2 lg:col-span-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-stone-500 gap-1 mb-2">
+            <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">Flujo de Recaudo por Medio de Pago (HU-15)</span>
+            <div className="text-xs font-mono-numbers font-bold text-amber-900">
+              Total Cobrado en Counter: {formatCOP(ingresosPorMetodo.totalRecaudado)}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-stone-500 block">Efectivo en Recepción</span>
+                <span className="font-bold text-stone-900 font-mono-numbers">{formatCOP(ingresosPorMetodo.efectivo)}</span>
+              </div>
+              <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded">Efectivo</span>
+            </div>
+            <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-stone-500 block">Datafono / Tarjetas</span>
+                <span className="font-bold text-stone-900 font-mono-numbers">{formatCOP(ingresosPorMetodo.tarjeta)}</span>
+              </div>
+              <span className="text-[10px] bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded">Tarjetas</span>
+            </div>
+            <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-stone-500 block">Transferencias Bancarias</span>
+                <span className="font-bold text-stone-900 font-mono-numbers">{formatCOP(ingresosPorMetodo.transferencia)}</span>
+              </div>
+              <span className="text-[10px] bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded">Bancos</span>
             </div>
           </div>
         </div>

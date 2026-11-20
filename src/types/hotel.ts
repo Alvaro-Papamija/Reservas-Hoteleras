@@ -1,8 +1,20 @@
-export type RolUsuario = 'ADMINISTRADOR' | 'CLIENTE';
+export type RolUsuario = 'ADMINISTRADOR' | 'RECEPCIONISTA' | 'CLIENTE';
 
 export type EstadoHabitacion = 'DISPONIBLE' | 'RESERVADA' | 'OCUPADA' | 'MANTENIMIENTO';
 
-export type EstadoReserva = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'FINALIZADA';
+export type EstadoReserva = 'PENDIENTE' | 'CONFIRMADA' | 'CHECK_IN' | 'FINALIZADA' | 'CANCELADA';
+
+export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
+
+export interface Pago {
+  id_pago: number;
+  id_reserva: number;
+  monto: number;
+  metodo: MetodoPago;
+  fecha: string;
+  recibo_caja: string;
+  registrado_por?: string;
+}
 
 export interface TipoHabitacion {
   id_tipo: number;
@@ -40,6 +52,7 @@ export interface Cliente {
   id_usuario: number;
   nombre: string;
   apellido: string;
+  tipo_documento?: 'CC' | 'CE' | 'PAS' | 'NIT' | 'TI';
   documento: string;
   telefono: string;
   direccion?: string;
@@ -67,6 +80,12 @@ export interface Reserva {
   subtotal?: number;
   cupon_aplicado?: string;
   descuento?: number;
+  pagos?: Pago[];
+  saldo?: number;
+  numero_llave?: string;
+  fecha_checkin?: string;
+  fecha_checkout?: string;
+  motivo_cancelacion?: string;
   calificacion?: number;
   comentario_calificacion?: string;
   estado: EstadoReserva;

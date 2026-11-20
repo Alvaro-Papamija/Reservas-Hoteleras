@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Habitacion, EstadoHabitacion } from '../../types/hotel';
 import { formatCOP, getEstadoHabitacionColor } from '../../utils/formatters';
@@ -34,6 +34,18 @@ export const AdminRoomsView: React.FC = () => {
   const [editingHabitacion, setEditingHabitacion] = useState<Habitacion | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
   // Form Fields
   const [numero, setNumero] = useState('');
@@ -331,8 +343,19 @@ export const AdminRoomsView: React.FC = () => {
 
       {/* Modal: Create or Edit Room (HU08) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={editingHabitacion ? `Editar Habitación ${editingHabitacion.numero}` : 'Registrar Nueva Habitación'}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-stone-200 mb-6">
               <div>
                 <h3 className="text-xl font-display font-bold text-stone-900">

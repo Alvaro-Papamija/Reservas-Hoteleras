@@ -57,11 +57,27 @@ public class Habitacion {
     @Column(name = "activa", nullable = false)
     private Boolean activa = true;
 
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
+
+    @Column(name = "imagen", length = 500)
+    private String imagen;
+
     // Constructores
     public Habitacion() {
     }
 
     public Habitacion(String numero, Integer piso, String tipo, Double precioBase, String estado, Boolean activa) {
+        this.numero = numero;
+        this.piso = piso;
+        this.tipo = tipo;
+        this.precioBase = precioBase;
+        this.estado = estado;
+        this.activa = activa;
+    }
+
+    public Habitacion(Long id, String numero, Integer piso, String tipo, Double precioBase, String estado, Boolean activa) {
+        this.id = id;
         this.numero = numero;
         this.piso = piso;
         this.tipo = tipo;
@@ -125,6 +141,22 @@ public class Habitacion {
 
     public void setActiva(Boolean activa) {
         this.activa = activa;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
     }
 
     @Override

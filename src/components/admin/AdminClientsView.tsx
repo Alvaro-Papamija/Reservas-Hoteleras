@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../../context/HotelContext';
 import { Cliente, Reserva } from '../../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable } from '../../utils/formatters';
@@ -13,13 +13,66 @@ import {
   CreditCard,
   MapPin,
   ChevronRight,
+  UserPlus,
 } from 'lucide-react';
 
 export const AdminClientsView: React.FC = () => {
-  const { clientes, reservas } = useHotel();
+  const { clientes, reservas, registrarHuesped } = useHotel();
 
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
+  const [showModalCrear, setShowModalCrear] = useState(false);
+
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedClient) setSelectedClient(null);
+        if (showModalCrear) setShowModalCrear(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedClient, showModalCrear]);
+
+  const [formNombre, setFormNombre] = useState('');
+  const [formApellido, setFormApellido] = useState('');
+  const [formTipoDoc, setFormTipoDoc] = useState<'CC' | 'CE' | 'PAS' | 'NIT' | 'TI'>('CC');
+  const [formDoc, setFormDoc] = useState('');
+  const [formTelefono, setFormTelefono] = useState('');
+  const [formCorreo, setFormCorreo] = useState('');
+  const [formDireccion, setFormDireccion] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+
+  const handleCrearHuesped = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    const res = registrarHuesped({
+      nombre: formNombre,
+      apellido: formApellido,
+      tipo_documento: formTipoDoc,
+      documento: formDoc,
+      telefono: formTelefono,
+      correo: formCorreo,
+      direccion: formDireccion,
+    });
+
+    if (res.success && res.cliente) {
+      setFormSuccess(`Huésped ${res.cliente.nombre} ${res.cliente.apellido} registrado exitosamente.`);
+      setShowModalCrear(false);
+      setFormNombre('');
+      setFormApellido('');
+      setFormDoc('');
+      setFormTelefono('');
+      setFormCorreo('');
+      setFormDireccion('');
+      setTimeout(() => setFormSuccess(null), 4000);
+    } else {
+      setFormError(res.error || 'Error al registrar huésped.');
+    }
+  };
 
   const filtered = clientes.filter((c) => {
     if (!search) return true;
@@ -52,18 +105,41 @@ export const AdminClientsView: React.FC = () => {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, cédula o email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-stone-200 text-xs outline-none focus:ring-1 focus:ring-amber-700 bg-white"
-          />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setFormError(null);
+              setShowModalCrear(true);
+            }}
+            className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Registrar Huésped</span>
+          </button>
+
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, cédula o email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-stone-200 text-xs outline-none focus:ring-1 focus:ring-amber-700 bg-white"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Notifications */}
+      {formSuccess && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between">
+          <span>{formSuccess}</span>
+          <button onClick={() => setFormSuccess(null)} className="text-emerald-500 hover:text-emerald-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Clients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,8 +216,19 @@ export const AdminClientsView: React.FC = () => {
 
       {/* Client History Modal */}
       {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto space-y-6">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedClient(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Historial de Cliente"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto space-y-6 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-stone-200">
               <div>
                 <h3 className="text-xl font-display font-bold text-stone-900">
@@ -206,6 +293,154 @@ export const AdminClientsView: React.FC = () => {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal HU-05: Registrar Nuevo Huésped (Walk-in) */}
+      {showModalCrear && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModalCrear(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Registrar Nuevo Huésped"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-4 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-stone-900">Registrar Nuevo Huésped</h3>
+                  <span className="text-xs text-stone-400">Verificación y alta de ficha de cliente</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModalCrear(false)}
+                className="w-7 h-7 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleCrearHuesped} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Primer Nombre *</label>
+                  <input
+                    type="text"
+                    value={formNombre}
+                    onChange={(e) => setFormNombre(e.target.value)}
+                    placeholder="ej. Santiago"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 outline-none focus:ring-1 focus:ring-amber-700"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Apellidos *</label>
+                  <input
+                    type="text"
+                    value={formApellido}
+                    onChange={(e) => setFormApellido(e.target.value)}
+                    placeholder="ej. Muñoz"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 outline-none focus:ring-1 focus:ring-amber-700"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Tipo Doc.</label>
+                  <select
+                    value={formTipoDoc}
+                    onChange={(e) => setFormTipoDoc(e.target.value as 'CC' | 'CE' | 'PAS' | 'NIT' | 'TI')}
+                    className="w-full px-2 py-2 rounded-xl border border-stone-300 outline-none focus:ring-1 focus:ring-amber-700 bg-white"
+                  >
+                    <option value="CC">Cédula (CC)</option>
+                    <option value="CE">Cédula Ext. (CE)</option>
+                    <option value="PAS">Pasaporte (PAS)</option>
+                    <option value="TI">Tarj. Identidad (TI)</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="font-semibold text-stone-700 block mb-1">Número de Documento *</label>
+                  <input
+                    type="text"
+                    value={formDoc}
+                    onChange={(e) => setFormDoc(e.target.value)}
+                    placeholder="ej. 1085294821"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 font-mono-numbers outline-none focus:ring-1 focus:ring-amber-700"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Correo Electrónico *</label>
+                  <input
+                    type="email"
+                    value={formCorreo}
+                    onChange={(e) => setFormCorreo(e.target.value)}
+                    placeholder="huesped@ejemplo.com"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 outline-none focus:ring-1 focus:ring-amber-700"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Teléfono Celular *</label>
+                  <input
+                    type="tel"
+                    value={formTelefono}
+                    onChange={(e) => setFormTelefono(e.target.value)}
+                    placeholder="+57 312 000 0000"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 font-mono-numbers outline-none focus:ring-1 focus:ring-amber-700"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-stone-700 block mb-1">Dirección / Procedencia</label>
+                <input
+                  type="text"
+                  value={formDireccion}
+                  onChange={(e) => setFormDireccion(e.target.value)}
+                  placeholder="ej. Carrera 7 # 32-16, Bogotá"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 outline-none focus:ring-1 focus:ring-amber-700"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-stone-200 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModalCrear(false)}
+                  className="px-4 py-2 rounded-xl border border-stone-200 text-stone-700 font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold shadow-xs"
+                >
+                  Registrar Huésped
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -88,6 +88,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }, [isOpen]);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Contador de bloqueo decreciente
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -193,12 +205,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/80 backdrop-blur-xs">
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/80 backdrop-blur-xs"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Autenticación y Seguridad"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative overflow-hidden"
+          className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative overflow-hidden my-auto sm:my-8"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Botón Cerrar */}
           <button
@@ -501,86 +522,110 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </form>
 
-          {/* Acordeón para Evaluadores / Cambio Rápido de Rol */}
-          <div className="mt-5 pt-3 border-t border-stone-100">
-            <button
-              type="button"
-              onClick={() => setShowDemoProfiles(!showDemoProfiles)}
-              className="w-full py-1 text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center justify-between transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-amber-600" />
-                Acceso Rápido para Evaluadores (Perfiles Demo)
-              </span>
-              {showDemoProfiles ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-
-            {showDemoProfiles && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-1.5 mt-2.5"
-              >
+          {/* Acordeón para Evaluadores / Cambio Rápido de Rol (Exclusivo entorno de desarrollo/pruebas) */}
+          {import.meta.env.DEV && (
+            <>
+              <div className="mt-5 pt-3 border-t border-stone-100">
                 <button
                   type="button"
-                  onClick={() => {
-                    switchRole('ADMINISTRADOR');
-                    onClose();
-                  }}
-                  className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                  onClick={() => setShowDemoProfiles(!showDemoProfiles)}
+                  className="w-full py-1 text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center justify-between transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-stone-900 text-amber-300 flex items-center justify-center font-bold text-[10px]">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-bold text-stone-900">Alvaro Papamija (Admin)</div>
-                      <div className="text-[10px] text-stone-500">alvaro@hotelalborada.com · Pass: Admin123*</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-amber-600" />
+                    Acceso Rápido para Evaluadores (Perfiles Demo)
+                  </span>
+                  {showDemoProfiles ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
 
+                {showDemoProfiles && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-1.5 mt-2.5"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole('ADMINISTRADOR');
+                        onClose();
+                      }}
+                      className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-stone-900 text-amber-300 flex items-center justify-center font-bold text-[10px]">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-stone-900">Alvaro Papamija (Admin)</div>
+                          <div className="text-[10px] text-stone-500">alvaro@hotelalborada.com · Pass: Admin123*</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole('RECEPCIONISTA');
+                        onClose();
+                      }}
+                      className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-blue-700 text-white flex items-center justify-center font-bold text-[10px]">
+                          REC
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-stone-900">Carolina Méndez (Recepción)</div>
+                          <div className="text-[10px] text-stone-500">recepcion@hotelalborada.com · Front-Desk</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole('CLIENTE');
+                        login('laura.gomez@ejemplo.com', 'Cliente123*');
+                        onClose();
+                      }}
+                      className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-amber-700 text-white flex items-center justify-center font-bold text-[10px]">
+                          LG
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-stone-900">Laura Gómez (Huésped)</div>
+                          <div className="text-[10px] text-stone-500">laura.gomez@ejemplo.com · Pass: Cliente123*</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Pie de restablecer datos semilla */}
+              <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
                 <button
-                  type="button"
-                  onClick={() => {
-                    switchRole('CLIENTE');
-                    login('laura.gomez@ejemplo.com', 'Cliente123*');
-                    onClose();
-                  }}
-                  className="w-full p-2 rounded-xl border border-stone-200 hover:border-amber-700 bg-stone-50/70 text-left flex items-center justify-between transition-all"
+                  onClick={handleReset}
+                  className="hover:text-stone-700 flex items-center gap-1 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-amber-700 text-white flex items-center justify-center font-bold text-[10px]">
-                      LG
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-bold text-stone-900">Laura Gómez (Huésped)</div>
-                      <div className="text-[10px] text-stone-500">laura.gomez@ejemplo.com · Pass: Cliente123*</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-amber-800 font-bold">Auto-login</span>
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Restablecer datos demo</span>
                 </button>
-              </motion.div>
-            )}
-          </div>
+                <span>Seguridad OWASP ASVS v4</span>
+              </div>
 
-          {/* Pie de restablecer datos semilla */}
-          <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
-            <button
-              onClick={handleReset}
-              className="hover:text-stone-700 flex items-center gap-1 transition-colors"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>Restablecer datos demo</span>
-            </button>
-            <span>Seguridad OWASP ASVS v4</span>
-          </div>
-
-          {resetNotice && (
-            <div className="mt-2 p-1.5 bg-emerald-50 text-emerald-800 text-center rounded-lg text-[11px] font-medium">
-              Datos restablecidos con éxito.
-            </div>
+              {resetNotice && (
+                <div className="mt-2 p-1.5 bg-emerald-50 text-emerald-800 text-center rounded-lg text-[11px] font-medium">
+                  Datos restablecidos con éxito.
+                </div>
+              )}
+            </>
           )}
         </motion.div>
       </div>

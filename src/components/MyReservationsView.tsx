@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHotel } from '../context/HotelContext';
 import { Reserva } from '../types/hotel';
 import { formatCOP, formatDateDMY, formatDateReadable, getEstadoReservaColor } from '../utils/formatters';
@@ -18,6 +18,7 @@ import {
   Download,
   Mail,
   Star,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -30,7 +31,21 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA'>('TODAS');
   const [selectedReservaForCancel, setSelectedReservaForCancel] = useState<Reserva | null>(null);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('Cambio de itinerario o planes de viaje');
   const [selectedReservaForEmail, setSelectedReservaForEmail] = useState<Reserva | null>(null);
+
+  // Accesibilidad: Cerrar modales abiertos con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedReservaForRating) setSelectedReservaForRating(null);
+        if (selectedReservaForCancel) setSelectedReservaForCancel(null);
+        if (selectedReservaForEmail) setSelectedReservaForEmail(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedReservaForRating, selectedReservaForCancel, selectedReservaForEmail]);
   const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
   const [ratingStars, setRatingStars] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
@@ -52,7 +67,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
     if (!selectedReservaForCancel) return;
     setCancelError(null);
 
-    const result = cancelarReserva(selectedReservaForCancel.id_reserva, true);
+    const result = cancelarReserva(selectedReservaForCancel.id_reserva, true, motivoCancelacion);
     if (result.success) {
       setCancelSuccessMsg(`La reserva ${selectedReservaForCancel.codigo} ha sido cancelada satisfactoriamente.`);
       setSelectedReservaForCancel(null);
@@ -334,8 +349,19 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
       {/* Calificar Estancia Modal */}
       {selectedReservaForRating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReservaForRating(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Calificar tu Estancia"
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
@@ -343,9 +369,19 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                   Calificar tu Estancia
                 </h3>
               </div>
-              <span className="text-xs font-mono-numbers text-stone-500">
-                {selectedReservaForRating.codigo}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono-numbers text-stone-500">
+                  {selectedReservaForRating.codigo}
+                </span>
+                <button
+                  onClick={() => setSelectedReservaForRating(null)}
+                  className="p-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                  aria-label="Cerrar modal"
+                  title="Cerrar (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <p className="text-xs text-stone-600 mb-4">
@@ -423,8 +459,28 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
 
       {/* Cancellation Confirmation Modal */}
       {selectedReservaForCancel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 overflow-y-auto bg-stone-950/70 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReservaForCancel(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmación de Cancelación"
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedReservaForCancel(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+              aria-label="Cerrar modal"
+              title="Cerrar (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
             <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -442,6 +498,23 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                 {cancelError}
               </div>
             )}
+
+            <div className="mb-4">
+              <label className="text-[11px] font-semibold text-stone-700 block mb-1">
+                Motivo de la Cancelación (Requerido)
+              </label>
+              <select
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:ring-1 focus:ring-rose-500 bg-white"
+              >
+                <option value="Cambio de itinerario o planes de viaje">Cambio de itinerario o planes de viaje</option>
+                <option value="Motivos de salud o fuerza mayor">Motivos de salud o fuerza mayor</option>
+                <option value="Encontré otra opción de hospedaje">Encontré otra opción de hospedaje</option>
+                <option value="Inconvenientes laborales">Inconvenientes laborales</option>
+                <option value="Otro motivo">Otro motivo</option>
+              </select>
+            </div>
 
             <div className="p-3 bg-stone-50 rounded-xl text-[11px] text-stone-500 mb-6">
               Esta acción liberará inmediatamente la habitación en el sistema para que otros viajeros puedan reservarla.

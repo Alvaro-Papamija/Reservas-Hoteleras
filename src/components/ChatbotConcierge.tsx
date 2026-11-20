@@ -54,6 +54,18 @@ export const ChatbotConcierge: React.FC<ChatbotConciergeProps> = ({
     }
   }, [messages, isOpen]);
 
+  // Accesibilidad: Cerrar chat con tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   const handleSendMessage = async (textToSend?: string) => {
     const text = textToSend || inputText;
     if (!text.trim()) return;

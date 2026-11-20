@@ -1,8 +1,14 @@
 package com.hotelalborada.backend.controller;
 
+import com.hotelalborada.backend.dto.HabitacionDTOs.ActualizarHabitacionRequest;
 import com.hotelalborada.backend.model.Habitacion;
 import com.hotelalborada.backend.repository.HabitacionResumen;
 import com.hotelalborada.backend.service.HabitacionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,15 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -26,11 +24,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador REST que expone los endpoints HTTP para la gestión de habitaciones y verificación de conexión.
+ * Controlador REST para el ciclo de vida CRUD y consulta de habitaciones.
  */
+@Tag(name = "Habitaciones", description = "Operaciones CRUD y catálogo público de habitaciones del hotel")
 @RestController
 @RequestMapping("/api/habitaciones")
-@CrossOrigin(origins = "*")
 public class HabitacionController {
 
     private final HabitacionService habitacionService;
@@ -39,10 +37,7 @@ public class HabitacionController {
         this.habitacionService = habitacionService;
     }
 
-    /**
-     * Endpoint de verificación de salud y conectividad de la arquitectura.
-     * GET /api/habitaciones/salud
-     */
+    @Operation(summary = "Verificación de salud", description = "Comprueba el estado operativo del backend y conectividad a base de datos.")
     @GetMapping("/salud")
     public ResponseEntity<Map<String, Object>> verificarSalud() {
         Map<String, Object> respuesta = new HashMap<>();
@@ -53,20 +48,14 @@ public class HabitacionController {
         return ResponseEntity.ok(respuesta);
     }
 
-    /**
-     * Obtiene todas las habitaciones persistidas en PostgreSQL.
-     * GET /api/habitaciones
-     */
+    @Operation(summary = "Listar todas las habitaciones", description = "Retorna el catálogo completo de habitaciones registradas.")
     @GetMapping
     public ResponseEntity<List<Habitacion>> listarHabitaciones() {
         List<Habitacion> habitaciones = habitacionService.listarTodas();
         return ResponseEntity.ok(habitaciones);
     }
 
-    /**
-     * Obtiene las habitaciones de forma paginada para reducir latencia y tamaño de respuesta.
-     * GET /api/habitaciones/paginado?page=0&size=10&sortBy=numero
-     */
+    @Operation(summary = "Listar habitaciones paginadas", description = "Permite paginar y ordenar el listado para optimizar rendimiento.")
     @GetMapping("/paginado")
     public ResponseEntity<Page<Habitacion>> listarHabitacionesPaginadas(
             @RequestParam(defaultValue = "0") int page,
@@ -78,41 +67,60 @@ public class HabitacionController {
         return ResponseEntity.ok(resultado);
     }
 
-    /**
-     * Obtiene proyecciones ligeras que solo seleccionan columnas necesarias.
-     * GET /api/habitaciones/resumen
-     */
+    @Operation(summary = "Listar resumenes ligeros", description = "Obtiene proyecciones optimizadas seleccionando únicamente columnas clave.")
     @GetMapping("/resumen")
     public ResponseEntity<List<HabitacionResumen>> listarResumenHabitaciones() {
         List<HabitacionResumen> resumenes = habitacionService.listarResumenes();
         return ResponseEntity.ok(resumenes);
     }
 
-    /**
-     * Obtiene una habitación por su ID.
-     * GET /api/habitaciones/{id}
-     */
+    @Operation(summary = "Obtener habitación por ID", description = "Retorna los detalles completos de una habitación específica.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Habitación encontrada"),
+            @ApiResponse(responseCode = "404", description = "Habitación no encontrada")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<Habitacion> obtenerHabitacionPorId(@PathVariable Long id) {
+    public ResponseEntity<Habitacion> obtenerHabitacionPorId(@Parameter(description = "ID único de habitación") @PathVariable Long id) {
         return habitacionService.buscarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Registra una nueva habitación en PostgreSQL mediante Spring Data JPA.
-     * POST /api/habitaciones
-     */
+    @Operation(summary = "Crear nueva habitación (CRUD - Create)", description = "Registra una nueva habitación en el inventario. Requiere rol ADMINISTRADOR.")
+    @ApiResponse(responseCode = "201", description = "Habitación creada exitosamente")
     @PostMapping
     public ResponseEntity<Habitacion> crearHabitacion(@Valid @RequestBody Habitacion habitacion) {
         Habitacion guardada = habitacionService.guardar(habitacion);
         return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
     }
 
-    /**
-     * Elimina una habitación por su identificador.
-     * DELETE /api/habitaciones/{id}
-     */
+    @Operation(summary = "Actualizar habitación existente (CRUD - Update)", description = "Modifica los atributos, precio o capacidad de una habitación. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Habitación actualizada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Habitación no encontrada")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<Habitacion> actualizarHabitacion(
+            @Parameter(description = "ID de la habitación") @PathVariable Long id,
+            @Valid @RequestBody ActualizarHabitacionRequest request) {
+        Habitacion actualizada = habitacionService.actualizar(id, request);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    @Operation(summary = "Cambiar estado operativo", description = "Actualiza el estado de una habitación (DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO).")
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Habitacion> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam String nuevoEstado) {
+        Habitacion actualizada = habitacionService.cambiarEstado(id, nuevoEstado);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    @Operation(summary = "Eliminar habitación (CRUD - Delete)", description = "Elimina físicamente una habitación por su identificador. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Habitación eliminada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Habitación no encontrada")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarHabitacion(@PathVariable Long id) {
         boolean eliminada = habitacionService.eliminar(id);
@@ -122,4 +130,3 @@ public class HabitacionController {
         return ResponseEntity.notFound().build();
     }
 }
-

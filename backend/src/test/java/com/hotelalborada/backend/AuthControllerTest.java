@@ -150,5 +150,24 @@ class AuthControllerTest {
                 passwordEncoder.matches("PasswordSegura789*", u.getContrasena())
         ));
     }
+
+    @Test
+    @DisplayName("OWASP Mass Assignment: Intentar registrarse como ADMINISTRADOR es ignorado y fuerza rol CLIENTE")
+    void testRegistroPrevieneEscaladaDePrivilegiosMassAssignment() {
+        when(usuarioRepository.existsByCorreoIgnoreCase("atacante@ejemplo.com")).thenReturn(false);
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> {
+            Usuario u = invocation.getArgument(0);
+            u.setIdUsuario(99L);
+            return u;
+        });
+
+        // Solicitud maliciosa intentando autoinyectar el rol ADMINISTRADOR
+        RegistroRequest request = new RegistroRequest("Atacante Escalada", "atacante@ejemplo.com", "PasswordSegura789*", "ADMINISTRADOR");
+        AuthResponse response = authService.registrar(request);
+
+        assertNotNull(response);
+        assertEquals("CLIENTE", response.getUsuario().getRol(), "El rol asignado en la respuesta debe ser CLIENTE");
+        verify(usuarioRepository).save(argThat(u -> "CLIENTE".equals(u.getRol())));
+    }
 }
 

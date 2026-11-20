@@ -1,6 +1,7 @@
 package com.hotelalborada.backend.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,7 +22,8 @@ import java.util.List;
 
 /**
  * Configuración de Spring Security 6 / Spring Boot 3 con arquitectura Stateless (JWT).
- * Implementa cifrado BCrypt con factor de costo 12 (OWASP Password Storage Cheat Sheet).
+ * Implementa cifrado BCrypt con factor de costo 12 (OWASP Password Storage Cheat Sheet),
+ * cabeceras de seguridad HTTP (HSTS, Anti-Clickjacking, X-Content-Type-Options) y control estricto de CORS.
  */
 @Configuration
 @EnableWebSecurity
@@ -29,6 +31,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}")
+    private String allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -45,6 +50,11 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny()) // OWASP: Protección Anti-Clickjacking
+                .contentTypeOptions(content -> {})  // OWASP: X-Content-Type-Options: nosniff
+                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)) // HSTS 1 año
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, authException) -> {
@@ -54,16 +64,28 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas de autenticación
+                // Documentación Interactiva Swagger / OpenAPI 3 pública
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // Rutas públicas de autenticación y salud
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
-                // Rutas públicas de catálogo de habitaciones
+                .requestMatchers(HttpMethod.GET, "/api/habitaciones/salud").permitAll()
+                // Catálogo de habitaciones público para consulta de huéspedes
                 .requestMatchers(HttpMethod.GET, "/api/habitaciones/**").permitAll()
+                // Modificaciones al inventario de habitaciones restringidas a administradores
+                .requestMatchers(HttpMethod.POST, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.PUT, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                // Clientes y Pagos en Counter gestionados por Recepción y Administración
+                .requestMatchers("/api/clientes/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                .requestMatchers("/api/pagos/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                 // Rutas administrativas protegidas por rol
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
-                // Rutas que requieren sesión activa válida
+                // Rutas que requieren sesión activa válida (reservas, perfil me)
                 .requestMatchers("/api/auth/me").authenticated()
-                // Cualquier otra solicitud pública permitida
-                .anyRequest().permitAll()
+                .requestMatchers("/api/reservas/**").authenticated()
+                // Principio de mínimo privilegio: Cualquier otra solicitud no explícita requiere autenticación
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -73,7 +95,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*")); // Permite orígenes en desarrollo
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
