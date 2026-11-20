@@ -14,12 +14,12 @@ spring:
   application:
     name: hotel-backend
 
-  # Configuración de Conexión a PostgreSQL mediante Variables de Entorno
+  # Configuración de Conexión a Base de Datos (H2 embebido por defecto para desarrollo plug-and-play, o PostgreSQL con DB_URL)
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hotel_alborada_db}?sslmode=disable
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:h2:mem:hotel_alborada_db;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
     hikari:
       pool-name: HotelAlboradaHikariPool
       maximum-pool-size: 10
@@ -27,6 +27,11 @@ spring:
       idle-timeout: 300000
       connection-timeout: 20000
       max-lifetime: 1200000
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
   # Configuración de Redis Cache Empresarial
   data:
@@ -42,10 +47,11 @@ spring:
 
   # Configuración de Spring Data JPA / Hibernate
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: ${JPA_DIALECT:org.hibernate.dialect.H2Dialect}
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${SHOW_SQL:false}
+    defer-datasource-initialization: true
     properties:
       hibernate:
         format_sql: false

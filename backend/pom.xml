@@ -43,6 +43,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Base de Datos embebida H2 (desarrollo ágil plug-and-play y fallback local) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Validación declarativa de datos de entrada (Jakarta Validation) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

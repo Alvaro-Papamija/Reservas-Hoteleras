@@ -51,7 +51,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .headers(headers -> headers
-                .frameOptions(frame -> frame.deny()) // OWASP: Protección Anti-Clickjacking
+                .frameOptions(frame -> frame.sameOrigin()) // Permite consola H2 del mismo origen
                 .contentTypeOptions(content -> {})  // OWASP: X-Content-Type-Options: nosniff
                 .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)) // HSTS 1 año
             )
@@ -64,8 +64,8 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // Documentación Interactiva Swagger / OpenAPI 3 pública
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // Documentación Interactiva Swagger / OpenAPI 3 y Consola H2
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**").permitAll()
                 // Rutas públicas de autenticación y salud
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/habitaciones/salud").permitAll()
