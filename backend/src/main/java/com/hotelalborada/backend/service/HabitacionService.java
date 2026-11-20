@@ -68,6 +68,43 @@ public class HabitacionService {
     }
 
     /**
+     * Actualiza los atributos de una habitación existente (CRUD - Update).
+     */
+    @Transactional
+    public Habitacion actualizar(Long id, com.hotelalborada.backend.dto.HabitacionDTOs.ActualizarHabitacionRequest request) {
+        Habitacion hab = habitacionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada con ID: " + id));
+
+        hab.setTipo(request.getTipo());
+        hab.setPrecioBase(request.getPrecioBase());
+        hab.setEstado(request.getEstado().toUpperCase());
+        hab.setPiso(request.getPiso());
+        if (request.getActiva() != null) {
+            hab.setActiva(request.getActiva());
+        }
+        if (request.getDescripcion() != null) {
+            hab.setDescripcion(request.getDescripcion());
+        }
+        if (request.getImagen() != null) {
+            hab.setImagen(request.getImagen());
+        }
+
+        return habitacionRepository.save(hab);
+    }
+
+    /**
+     * Cambia el estado operativo de una habitación (DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO).
+     */
+    @Transactional
+    public Habitacion cambiarEstado(Long id, String nuevoEstado) {
+        Habitacion hab = habitacionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada con ID: " + id));
+
+        hab.setEstado(nuevoEstado.toUpperCase());
+        return habitacionRepository.save(hab);
+    }
+
+    /**
      * Elimina una habitación por su ID dentro de una transacción.
      */
     @Transactional

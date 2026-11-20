@@ -31,6 +31,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         seedUsuarioSiNoExiste("Alvaro Papamija", "alvaro@hotelalborada.com", "Admin123*", "ADMINISTRADOR");
+        seedUsuarioSiNoExiste("Carolina Méndez", "recepcion@hotelalborada.com", "Recepcion123*", "RECEPCIONISTA");
         seedUsuarioSiNoExiste("Laura Gómez", "laura.gomez@ejemplo.com", "Cliente123*", "CLIENTE");
         seedUsuarioSiNoExiste("Carlos Restrepo", "carlos.restrepo@ejemplo.com", "Cliente123*", "CLIENTE");
     }

@@ -64,6 +64,8 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
+                // Documentación Interactiva Swagger / OpenAPI 3 pública
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Rutas públicas de autenticación y salud
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/habitaciones/salud").permitAll()
@@ -72,11 +74,16 @@ public class SecurityConfig {
                 // Modificaciones al inventario de habitaciones restringidas a administradores
                 .requestMatchers(HttpMethod.POST, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PUT, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.PATCH, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.DELETE, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
+                // Clientes y Pagos en Counter gestionados por Recepción y Administración
+                .requestMatchers("/api/clientes/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                .requestMatchers("/api/pagos/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                 // Rutas administrativas protegidas por rol
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
-                // Rutas que requieren sesión activa válida
+                // Rutas que requieren sesión activa válida (reservas, perfil me)
                 .requestMatchers("/api/auth/me").authenticated()
+                .requestMatchers("/api/reservas/**").authenticated()
                 // Principio de mínimo privilegio: Cualquier otra solicitud no explícita requiere autenticación
                 .anyRequest().authenticated()
             )

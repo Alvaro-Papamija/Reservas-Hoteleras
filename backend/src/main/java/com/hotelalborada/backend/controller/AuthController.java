@@ -3,6 +3,8 @@ package com.hotelalborada.backend.controller;
 import com.hotelalborada.backend.dto.AuthDTOs.*;
 import com.hotelalborada.backend.service.AuthService;
 import com.hotelalborada.backend.service.AuthService.RateLimitException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,7 @@ import java.util.Map;
  * - Logout con invalidación de token en servidor
  * - Endpoint protegido /me para consultar la sesión activa
  */
+@Tag(name = "Autenticación", description = "Inicio de sesión JWT, registro seguro, cierre de sesión y consulta de perfil")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -35,9 +38,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    /**
-     * Iniciar sesión.
-     */
+    @Operation(summary = "Iniciar sesión", description = "Verifica credenciales contra hash BCrypt y genera un token JWT.")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
@@ -47,18 +48,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Registro de nuevo usuario.
-     */
+    @Operation(summary = "Registro de nuevo usuario", description = "Crea una cuenta con contraseña encriptada en BCrypt forzando rol CLIENTE.")
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegistroRequest request) {
         AuthResponse response = authService.registrar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Cerrar sesión invalidando el token en el servidor.
-     */
+    @Operation(summary = "Cierre seguro de sesión", description = "Revoca el token JWT en el servidor impidiendo su reutilización.")
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -68,9 +65,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtener el perfil del usuario autenticado (Ruta protegida).
-     */
+    @Operation(summary = "Obtener perfil del usuario autenticado", description = "Consulta los datos del usuario a partir del token JWT activo.")
     @GetMapping("/me")
     public ResponseEntity<UsuarioResponse> getPerfilAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

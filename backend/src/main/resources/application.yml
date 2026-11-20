@@ -64,6 +64,15 @@ app:
       max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
       lockout-duration-minutes: ${RATE_LIMIT_LOCKOUT_MINUTES:15}
 
+# Documentación OpenAPI 3 / Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
 # Configuración de Logging - Información interna y consultas SQL silenciadas en producción
 logging:
   level:
