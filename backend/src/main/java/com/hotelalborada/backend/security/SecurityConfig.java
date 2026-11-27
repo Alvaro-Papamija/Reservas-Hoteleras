@@ -71,6 +71,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/habitaciones/salud").permitAll()
                 // Catálogo de habitaciones público para consulta de huéspedes
                 .requestMatchers(HttpMethod.GET, "/api/habitaciones/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tipos-habitacion/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/cupones/**").permitAll()
                 // Modificaciones al inventario de habitaciones restringidas a administradores
                 .requestMatchers(HttpMethod.POST, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PUT, "/api/habitaciones/**").hasRole("ADMINISTRADOR")
@@ -83,6 +85,7 @@ public class SecurityConfig {
                 // Clientes: creación y consulta propia permitida a usuarios autenticados; listado general para staff
                 .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/clientes/{id}").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/clientes/**").hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                 // Rutas administrativas protegidas por rol
                 .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")

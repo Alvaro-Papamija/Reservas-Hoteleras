@@ -1,0 +1,717 @@
+{
+  "info": {
+    "_postman_id": "hotel-alborada-sprint2-collection",
+    "name": "Hotel Alborada Boutique - Sprint 2 REST API",
+    "description": "Colección completa oficial de pruebas y documentación de endpoints para el Sprint 2:\n1. Autenticación y Autorización (JWT, BCrypt, RBAC)\n2. CRUD de Inventario de Habitaciones\n3. CRUD de Expedientes de Reservas\n4. CRUD de Fichas de Clientes\n5. Registro y Liquidación de Pagos\n6. Catálogos Maestros (Tipos de Habitación y Cupones)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación y Autorización",
+      "item": [
+        {
+          "name": "1.1 Login Administrador (Auto-guarda JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "    console.log('JWT Token guardado:', jsonData.token);",
+                  "}",
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Retorna token JWT y rol ADMINISTRADOR', function () {",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.rol).to.eql('ADMINISTRADOR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"alvaro@hotelalborada.com\",\n  \"contrasena\": \"Admin123*\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Login Recepcionista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "}",
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"recepcion@hotelalborada.com\",\n  \"contrasena\": \"Recepcion123*\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.3 Registro de Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Diana\",\n  \"apellido\": \"Morales\",\n  \"correo\": \"diana.morales@ejemplo.com\",\n  \"contrasena\": \"Cliente123*\",\n  \"telefono\": \"+57 320 890 1234\",\n  \"tipoDocumento\": \"CC\",\n  \"documento\": \"1098765432\",\n  \"direccion\": \"Carrera 15 # 85-30, Bogotá\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.4 Consultar Perfil Activo (/me)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "1.5 Cerrar Sesión (Revocar Token)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. CRUD Habitaciones",
+      "item": [
+        {
+          "name": "2.1 Verificación de Salud",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/salud",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "salud"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Listar Todas (Read)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Listar Paginadas (Read)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/paginado?page=0&size=5&sortBy=numero",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "paginado"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "5" },
+                { "key": "sortBy", "value": "numero" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.4 Obtener por ID (Read)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "1"]
+            }
+          }
+        },
+        {
+          "name": "2.5 Crear Habitación (Create - Requiere Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"302\",\n  \"piso\": 3,\n  \"idTipo\": 5,\n  \"tipo\": \"Suite\",\n  \"precioBase\": 450000.00,\n  \"estado\": \"DISPONIBLE\",\n  \"descripcion\": \"Suite Mirador con balcón colonial y jacuzzi exterior\",\n  \"imagen\": \"https://images.unsplash.com/photo-1582719478250-c89cae4dc85b\",\n  \"activa\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones"]
+            }
+          }
+        },
+        {
+          "name": "2.6 Actualizar Habitación (Update - Requiere Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precioBase\": 195000.00,\n  \"descripcion\": \"Habitación doble clásica en piso 1 con cama Queen y baño privado en mármol renovado.\",\n  \"activa\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "2"]
+            }
+          }
+        },
+        {
+          "name": "2.7 Cambiar Estado Operativo (Patch)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/1/estado?nuevoEstado=MANTENIMIENTO",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "1", "estado"],
+              "query": [
+                { "key": "nuevoEstado", "value": "MANTENIMIENTO" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.8 Eliminar Habitación (Delete - Requiere Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/habitaciones/10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "habitaciones", "10"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. CRUD Reservas",
+      "item": [
+        {
+          "name": "3.1 Listar Todas las Reservas (Read)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/reservas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Crear Reserva con Cupón (Create)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idHabitacion\": 2,\n  \"fechaEntrada\": \"2026-12-25\",\n  \"fechaSalida\": \"2026-12-28\",\n  \"cantidadHuespedes\": 2,\n  \"cuponCodigo\": \"BIENVENIDA2026\",\n  \"notas\": \"Llegada aproximada a las 16:00\",\n  \"cliente\": {\n    \"nombre\": \"Laura\",\n    \"apellido\": \"Gómez\",\n    \"tipoDocumento\": \"CC\",\n    \"documento\": \"1085294821\",\n    \"telefono\": \"+57 312 458 9012\",\n    \"correo\": \"laura.gomez@ejemplo.com\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas"]
+            }
+          }
+        },
+        {
+          "name": "3.3 Consultar Reserva por Código (Read)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/reservas/codigo/RH-20261215-0042",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas", "codigo", "RH-20261215-0042"]
+            }
+          }
+        },
+        {
+          "name": "3.4 Modificar Fechas de Reserva (Update)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevaFechaEntrada\": \"2026-12-16\",\n  \"nuevaFechaSalida\": \"2026-12-19\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservas/1/fechas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas", "1", "fechas"]
+            }
+          }
+        },
+        {
+          "name": "3.5 Registrar Check-In y Asignar Llave (Update)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroLlave\": \"LLAVE-103-RFID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservas/1/checkin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas", "1", "checkin"]
+            }
+          }
+        },
+        {
+          "name": "3.6 Cancelar Reserva (Delete Lógico)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Cancelación por motivos laborales con más de 48h de anticipación\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservas/1/cancelar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservas", "1", "cancelar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. CRUD Clientes",
+      "item": [
+        {
+          "name": "4.1 Listar Todos los Clientes (Read)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/clientes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes"]
+            }
+          }
+        },
+        {
+          "name": "4.2 Registrar Huésped Walk-In (Create)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Andrés\",\n  \"apellido\": \"Cifuentes\",\n  \"tipoDocumento\": \"CC\",\n  \"documento\": \"98765432\",\n  \"telefono\": \"+57 311 555 7788\",\n  \"correo\": \"andres.cifuentes@ejemplo.com\",\n  \"direccion\": \"Calle 10 # 40-20, Cali\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/clientes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes"]
+            }
+          }
+        },
+        {
+          "name": "4.3 Buscar Cliente por Documento (Read)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/clientes/documento/1085294821",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes", "documento", "1085294821"]
+            }
+          }
+        },
+        {
+          "name": "4.4 Actualizar Cliente (Update)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Sofía\",\n  \"apellido\": \"Gómez\",\n  \"tipoDocumento\": \"CC\",\n  \"documento\": \"1085294821\",\n  \"telefono\": \"+57 312 999 8888\",\n  \"correo\": \"laura.gomez@ejemplo.com\",\n  \"direccion\": \"Carrera 7 # 120-10, Bogotá\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/clientes/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes", "1"]
+            }
+          }
+        },
+        {
+          "name": "4.5 Eliminar Cliente (Delete - Requiere Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/clientes/3",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes", "3"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Pagos y Recibos de Caja",
+      "item": [
+        {
+          "name": "5.1 Registrar Abono / Pago en Counter (Create)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idReserva\": 1,\n  \"monto\": 259000.00,\n  \"metodo\": \"EFECTIVO\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            }
+          }
+        },
+        {
+          "name": "5.2 Listar Historial de Pagos de Reserva",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pagos/reserva/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos", "reserva", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Catálogos Maestros (Tipos y Cupones)",
+      "item": [
+        {
+          "name": "6.1 Listar Tipos de Habitación",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tipos-habitacion",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tipos-habitacion"]
+            }
+          }
+        },
+        {
+          "name": "6.2 Validar Cupón de Descuento",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/cupones/validar/BIENVENIDA2026",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cupones", "validar", "BIENVENIDA2026"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

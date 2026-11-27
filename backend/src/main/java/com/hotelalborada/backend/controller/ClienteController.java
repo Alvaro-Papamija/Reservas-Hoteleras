@@ -66,4 +66,18 @@ public class ClienteController {
         ClienteResponse actualizado = clienteService.actualizar(id, request);
         return ResponseEntity.ok(actualizado);
     }
+
+    @Operation(summary = "Eliminar ficha de cliente (CRUD - Delete)", description = "Elimina un cliente por su ID del directorio. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Cliente eliminado con éxito"),
+            @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@Parameter(description = "ID del cliente") @PathVariable Long id) {
+        boolean eliminado = clienteService.eliminar(id);
+        if (eliminado) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
 }

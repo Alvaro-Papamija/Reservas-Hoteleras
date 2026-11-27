@@ -73,6 +73,15 @@ public class ClienteService {
         return mapToResponse(actualizado);
     }
 
+    @Transactional
+    public boolean eliminar(Long id) {
+        if (!clienteRepository.existsById(id)) {
+            return false;
+        }
+        clienteRepository.deleteById(id);
+        return true;
+    }
+
     public ClienteResponse mapToResponse(Cliente c) {
         return new ClienteResponse(
                 c.getIdCliente(),
