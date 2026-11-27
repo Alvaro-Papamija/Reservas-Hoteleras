@@ -47,7 +47,7 @@ spring:
 
   # Configuración de Spring Data JPA / Hibernate
   jpa:
-    database-platform: ${JPA_DIALECT:org.hibernate.dialect.H2Dialect}
+    open-in-view: false
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${SHOW_SQL:false}

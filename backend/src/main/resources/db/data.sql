@@ -77,3 +77,13 @@ INSERT INTO pagos (id_pago, id_reserva, monto, metodo, recibo_caja, registrado_p
 (2, 2, 1512000.00, 'TRANSFERENCIA', 'REC-2026-0002', 'recepcion@hotelalborada.com')
 ON CONFLICT (recibo_caja) DO UPDATE SET
     monto = EXCLUDED.monto;
+
+-- 8. SINCRONIZACIÓN DE SECUENCIAS
+-- Garantiza que las siguientes inserciones automáticas no colisionen con los IDs precargados
+ALTER SEQUENCE IF EXISTS usuarios_id_usuario_seq RESTART WITH 10;
+ALTER SEQUENCE IF EXISTS tipos_habitacion_id_tipo_seq RESTART WITH 10;
+ALTER SEQUENCE IF EXISTS habitaciones_id_habitacion_seq RESTART WITH 20;
+ALTER SEQUENCE IF EXISTS clientes_id_cliente_seq RESTART WITH 10;
+ALTER SEQUENCE IF EXISTS cupones_id_cupon_seq RESTART WITH 10;
+ALTER SEQUENCE IF EXISTS reservas_id_reserva_seq RESTART WITH 10;
+ALTER SEQUENCE IF EXISTS pagos_id_pago_seq RESTART WITH 10;

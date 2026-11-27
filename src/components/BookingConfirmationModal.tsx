@@ -72,7 +72,7 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-4 sm:my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Success Header with Warm Terracotta/Amber accent */}

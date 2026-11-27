@@ -65,7 +65,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 bg-stone-950/75 backdrop-blur-xs overflow-y-auto"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -78,7 +78,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.18 }}
-          className="bg-white rounded-3xl max-w-4xl w-full h-[90vh] max-h-[850px] shadow-2xl border border-stone-200 flex flex-col overflow-hidden my-auto"
+          className="bg-white rounded-3xl max-w-4xl w-full h-[90vh] max-h-[850px] shadow-2xl border border-stone-200 flex flex-col overflow-hidden my-4 sm:my-8"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

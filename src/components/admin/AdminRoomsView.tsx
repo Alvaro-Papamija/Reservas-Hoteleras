@@ -353,7 +353,7 @@ export const AdminRoomsView: React.FC = () => {
           aria-label={editingHabitacion ? `Editar Habitación ${editingHabitacion.numero}` : 'Registrar Nueva Habitación'}
         >
           <div
-            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto relative my-auto sm:my-8"
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto relative my-4 sm:my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-stone-200 mb-6">

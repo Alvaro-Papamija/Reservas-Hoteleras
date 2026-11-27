@@ -399,7 +399,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
           aria-label="Calificar tu Estancia"
         >
           <div
-            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-4 sm:my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
@@ -509,7 +509,7 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
           aria-label="Confirmación de Cancelación"
         >
           <div
-            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-auto sm:my-8"
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative my-4 sm:my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <button

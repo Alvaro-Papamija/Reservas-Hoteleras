@@ -90,7 +90,7 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
-          className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-stone-200 relative my-auto overflow-hidden"
+          className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-stone-200 relative my-4 sm:my-8 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Fijo / Siempre Visible */}
