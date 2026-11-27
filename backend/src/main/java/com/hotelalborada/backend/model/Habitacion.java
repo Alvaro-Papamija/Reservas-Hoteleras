@@ -91,8 +91,16 @@ public class Habitacion {
         return id;
     }
 
+    public Long getIdHabitacion() {
+        return id;
+    }
+
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setIdHabitacion(Long idHabitacion) {
+        this.id = idHabitacion;
     }
 
     public String getNumero() {

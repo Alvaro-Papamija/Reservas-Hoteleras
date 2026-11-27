@@ -29,6 +29,9 @@ class HabitacionServiceTest {
     @Mock
     private HabitacionRepository habitacionRepository;
 
+    @Mock
+    private com.hotelalborada.backend.repository.ReservaRepository reservaRepository;
+
     @InjectMocks
     private HabitacionService habitacionService;
 

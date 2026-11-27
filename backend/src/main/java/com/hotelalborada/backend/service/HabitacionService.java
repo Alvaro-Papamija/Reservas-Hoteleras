@@ -1,13 +1,16 @@
 package com.hotelalborada.backend.service;
 
 import com.hotelalborada.backend.model.Habitacion;
+import com.hotelalborada.backend.model.Reserva;
 import com.hotelalborada.backend.repository.HabitacionRepository;
 import com.hotelalborada.backend.repository.HabitacionResumen;
+import com.hotelalborada.backend.repository.ReservaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +22,28 @@ import java.util.Optional;
 public class HabitacionService {
 
     private final HabitacionRepository habitacionRepository;
+    private final ReservaRepository reservaRepository;
 
-    public HabitacionService(HabitacionRepository habitacionRepository) {
+    public HabitacionService(HabitacionRepository habitacionRepository, ReservaRepository reservaRepository) {
         this.habitacionRepository = habitacionRepository;
+        this.reservaRepository = reservaRepository;
+    }
+
+    /**
+     * Consulta habitaciones disponibles entre dos fechas, filtrando solapamientos y mantenimiento.
+     */
+    public List<Habitacion> listarDisponibles(LocalDate entrada, LocalDate salida, Integer capacidad) {
+        List<Habitacion> activas = habitacionRepository.findByActivaTrue();
+        if (entrada == null || salida == null) {
+            return activas;
+        }
+        return activas.stream()
+                .filter(h -> !"MANTENIMIENTO".equalsIgnoreCase(h.getEstado()))
+                .filter(h -> {
+                    List<Reserva> solapadas = reservaRepository.findSolapadas(h.getId(), entrada, salida, null);
+                    return solapadas.isEmpty();
+                })
+                .toList();
     }
 
     /**

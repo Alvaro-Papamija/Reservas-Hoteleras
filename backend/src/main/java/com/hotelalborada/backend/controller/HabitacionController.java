@@ -55,6 +55,15 @@ public class HabitacionController {
         return ResponseEntity.ok(habitaciones);
     }
 
+    @Operation(summary = "Consultar habitaciones disponibles", description = "Filtra habitaciones que no tengan solapamiento de fechas con reservas activas.")
+    @GetMapping("/disponibles")
+    public ResponseEntity<List<Habitacion>> listarDisponibles(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaEntrada,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaSalida,
+            @RequestParam(required = false) Integer capacidad) {
+        return ResponseEntity.ok(habitacionService.listarDisponibles(fechaEntrada, fechaSalida, capacidad));
+    }
+
     @Operation(summary = "Listar habitaciones paginadas", description = "Permite paginar y ordenar el listado para optimizar rendimiento.")
     @GetMapping("/paginado")
     public ResponseEntity<Page<Habitacion>> listarHabitacionesPaginadas(
