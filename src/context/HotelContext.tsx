@@ -806,14 +806,17 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const createReserva = (data: {
     id_habitacion: number;
     fecha_entrada: string;
-    fecha_salida: string;
+    fecha_salida?: string;
+    fechaSalida?: string;
     cantidad_huespedes: number;
     notas?: string;
     cupon_codigo?: string;
     cliente_override?: Partial<Cliente>;
     consentimiento_legal?: ConsentimientoLegal;
   }): { success: boolean; reserva?: Reserva; error?: string } => {
-    const { id_habitacion, fecha_entrada, fecha_salida, cantidad_huespedes, notas, cupon_codigo, cliente_override, consentimiento_legal } = data;
+    const { id_habitacion, cantidad_huespedes, notas, cupon_codigo, cliente_override, consentimiento_legal } = data;
+    const fecha_entrada = data.fecha_entrada || (data as any).fechaEntrada;
+    const fecha_salida = (data.fecha_salida || data.fechaSalida) as string;
 
     // Validation 1: Dates
     const start = new Date(fecha_entrada);

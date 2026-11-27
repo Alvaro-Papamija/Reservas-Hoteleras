@@ -12,7 +12,6 @@ import {
   Compass,
 } from 'lucide-react';
 import { NotificationsDropdown } from './NotificationsDropdown';
-import { ApiStatusIndicator } from './ApiStatusIndicator';
 
 interface NavbarProps {
   onOpenAuth: () => void;
@@ -43,9 +42,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
     : 0;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-stone-200/80 transition-colors">
+    <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-stone-200/80 transition-colors w-full max-w-full overflow-x-clip">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-3 xl:gap-6">
+        <div className="flex items-center justify-between h-20 gap-2 xl:gap-4">
           {/* Zone 1: Brand Wordmark (1 element, single line) */}
           <button
             onClick={() => setActiveView(currentRole === 'ADMINISTRADOR' ? 'admin-dashboard' : currentRole === 'RECEPCIONISTA' ? 'admin-reservas' : 'inicio')}
@@ -65,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
           </button>
 
           {/* Zone 2: Navigation Links (Strict RBAC-filtered) */}
-          <nav className="hidden lg:flex items-center gap-2 xl:gap-5 text-xs xl:text-sm font-medium text-stone-600">
+          <nav className="hidden lg:flex items-center gap-1.5 xl:gap-3 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-sm font-medium text-stone-600">
             {currentRole === 'CLIENTE' ? (
               <>
                 <button
@@ -198,10 +197,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
           </nav>
 
           {/* Zone 3: 1 Primary Action + Quick Role Switcher for Evaluation */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* API Health & Integration Pill */}
-            <ApiStatusIndicator className="hidden md:inline-flex" />
-
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Quick Role Simulator Toggle */}
             <div className="hidden sm:flex items-center p-0.5 sm:p-1 bg-stone-200/70 rounded-xl text-[11px] sm:text-xs font-medium">
               <button

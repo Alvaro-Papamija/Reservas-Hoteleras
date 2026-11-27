@@ -263,7 +263,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const result = createReserva({
       id_habitacion: habitacion.id_habitacion,
       fecha_entrada: fechaEntrada,
-      fechaSalida: fechaSalida,
+      fecha_salida: fechaSalida,
       cantidad_huespedes: huespedes,
       notas: `${notas}${metodoPago !== 'EFECTIVO' ? ` [Pago Online con ${metodoPago}]` : ' [Pago en Recepción]'}`,
       cupon_codigo: cuponAplicado?.cupon.codigo,
