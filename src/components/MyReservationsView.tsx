@@ -39,6 +39,12 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
   const [selectedReservaForPayment, setSelectedReservaForPayment] = useState<Reserva | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'TARJETA' | 'TRANSFERENCIA'>('TARJETA');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
+  const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
+  const [ratingSuccessMsg, setRatingSuccessMsg] = useState<string | null>(null);
 
   // Accesibilidad: Cerrar modales abiertos con tecla Escape
   useEffect(() => {
@@ -53,12 +59,6 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedReservaForRating, selectedReservaForCancel, selectedReservaForEmail, selectedReservaForPayment]);
-  const [selectedReservaForRating, setSelectedReservaForRating] = useState<Reserva | null>(null);
-  const [ratingStars, setRatingStars] = useState(5);
-  const [ratingComment, setRatingComment] = useState('');
-  const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
-  const [ratingSuccessMsg, setRatingSuccessMsg] = useState<string | null>(null);
 
   // Helper seguro para formatear fechas de creación ISO o SQL
   const getDisplayCreationDate = (fechaRaw?: string): string => {

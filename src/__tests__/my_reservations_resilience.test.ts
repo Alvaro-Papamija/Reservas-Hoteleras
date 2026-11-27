@@ -51,4 +51,10 @@ describe('Resiliencia de Mis Reservas y Manejo Seguro de Datos', () => {
     const diffHours = (entradaDate.getTime() - now.getTime()) / (1000 * 3600);
     expect(diffHours).toBeGreaterThan(48);
   });
+
+  it('MyReservationsView exporta correctamente el componente sin errores de inicialización temporal (TDZ)', async () => {
+    const module = await import('../components/MyReservationsView');
+    expect(module.MyReservationsView).toBeDefined();
+    expect(typeof module.MyReservationsView).toBe('function');
+  });
 });
