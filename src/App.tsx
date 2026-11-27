@@ -59,7 +59,7 @@ import {
 } from 'lucide-react';
 
 const MainApp: React.FC = () => {
-  const { activeView, setActiveView, currentRole } = useHotel();
+  const { activeView, setActiveView, currentRole, tipos } = useHotel();
 
   // Search parameters for availability view
   const [searchParams, setSearchParams] = useState<{
@@ -99,13 +99,14 @@ const MainApp: React.FC = () => {
 
   const handleProceedToBooking = (hab: Habitacion, customEntrada?: string, customSalida?: string) => {
     setDetailModalHab(null);
-    if (customEntrada && customSalida) {
-      setSearchParams((prev) => ({
-        ...prev,
-        entrada: customEntrada,
-        salida: customSalida,
-      }));
-    }
+    const roomTipo = tipos.find((t) => t.id_tipo === hab.id_tipo);
+    const maxRoomCap = roomTipo?.capacidad || 2;
+    setSearchParams((prev) => ({
+      ...prev,
+      entrada: customEntrada || prev.entrada,
+      salida: customSalida || prev.salida,
+      huespedes: Math.min(prev.huespedes, maxRoomCap),
+    }));
     setBookingModalHab(hab);
   };
 

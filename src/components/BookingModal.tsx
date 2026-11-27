@@ -64,11 +64,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     isApiConnected,
   } = useHotel();
 
-  // Reservation details
+  // Definición previa de tipo y capacidad máxima para inicialización de estado
+  const tipo = habitacion ? tipos.find((t) => t.id_tipo === habitacion.id_tipo) : null;
+  const maxCap = tipo?.capacidad || 2;
+
+  // Reservation details (inicializado respetando el tope de capacidad de la habitación)
   const [fechaEntrada, setFechaEntrada] = useState(defaultEntrada);
   const [fechaSalida, setFechaSalida] = useState(defaultSalida);
-  const [huespedes, setHuespedes] = useState(defaultHuespedes);
+  const [huespedes, setHuespedes] = useState(() => Math.min(Math.max(1, defaultHuespedes), maxCap));
   const [notas, setNotas] = useState('');
+
+  // Sincronizar dinámicamente capacidad y fechas al cambiar habitación o parámetros de búsqueda
+  useEffect(() => {
+    if (habitacion) {
+      const roomTipo = tipos.find((t) => t.id_tipo === habitacion.id_tipo);
+      const cap = roomTipo?.capacidad || 2;
+      setHuespedes((prev) => {
+        const desired = defaultHuespedes || prev;
+        return Math.min(Math.max(1, desired), cap);
+      });
+      setFechaEntrada(defaultEntrada);
+      setFechaSalida(defaultSalida);
+      setFieldErrors({});
+      setErrorMessage(null);
+    }
+  }, [habitacion, defaultEntrada, defaultSalida, defaultHuespedes, tipos]);
 
   // Legal consent states (Mandatory unselected by default per Ley 1581 and Ley 1480)
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
@@ -102,6 +122,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Helper inmutable para limpiar errores de campo individuales al escribir o seleccionar
+  const clearFieldError = (fieldName: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[fieldName]) return prev;
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
+  };
+
   // Accessibility: Close with Escape
   useEffect(() => {
     if (!habitacion) return;
@@ -116,7 +146,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   if (!habitacion) return null;
 
-  const tipo = tipos.find((t) => t.id_tipo === habitacion.id_tipo);
   const precioNoche = tipo ? tipo.precio_base : 180000;
   const { noches, total: subtotal } = calculateTotal(precioNoche, fechaEntrada, fechaSalida);
 
@@ -380,24 +409,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                 <div>
                   <label className="text-[11px] font-semibold text-stone-600 block mb-1">
-                    Huéspedes (máx. {tipo?.capacidad})
+                    Huéspedes (máx. {tipo?.capacidad || 1})
                   </label>
                   <select
                     value={huespedes}
                     onChange={(e) => {
                       setHuespedes(Number(e.target.value));
-                      delete fieldErrors.huespedes;
+                      clearFieldError('huespedes');
                     }}
                     className={`w-full px-3 py-2 rounded-xl border text-xs bg-white focus:ring-1 focus:ring-amber-700 outline-none ${
-                      fieldErrors.huespedes ? 'border-rose-400' : 'border-stone-300'
+                      fieldErrors.huespedes ? 'border-rose-500 bg-rose-50/20' : 'border-stone-300'
                     }`}
                   >
-                    {Array.from({ length: tipo?.capacidad || 2 }, (_, i) => i + 1).map((n) => (
+                    {Array.from({ length: tipo?.capacidad || 1 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
                         {n} {n === 1 ? 'Huésped' : 'Huéspedes'}
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.huespedes && (
+                    <div className="text-[11px] text-rose-600 font-medium mt-1">{fieldErrors.huespedes}</div>
+                  )}
                 </div>
               </div>
 
