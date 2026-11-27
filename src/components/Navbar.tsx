@@ -33,11 +33,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onOpenSearch }) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Count active reservations for client
+  // Count active reservations for client (con soporte resiliente para snake_case y camelCase)
   const clientActiveCount = isAuthenticated && currentUser?.correo
-    ? reservas.filter(
-        (r) => r.cliente_correo.toLowerCase() === currentUser.correo.toLowerCase() && (r.estado === 'PENDIENTE' || r.estado === 'CONFIRMADA')
-      ).length
+    ? reservas.filter((r) => {
+        const resEmail = (r.cliente_correo || (r as any).clienteCorreo || '').trim().toLowerCase();
+        const userEmail = (currentUser?.correo || '').trim().toLowerCase();
+        return resEmail === userEmail && (r.estado === 'PENDIENTE' || r.estado === 'CONFIRMADA');
+      }).length
     : 0;
 
   return (

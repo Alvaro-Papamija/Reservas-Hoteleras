@@ -60,10 +60,26 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
   const [ratingSuccessMsg, setRatingSuccessMsg] = useState<string | null>(null);
 
-  // Filter client's reservations
-  const clientReservations = reservas.filter(
-    (r) => currentUser?.correo && r.cliente_correo.toLowerCase() === currentUser.correo.toLowerCase()
-  );
+  // Helper seguro para formatear fechas de creación ISO o SQL
+  const getDisplayCreationDate = (fechaRaw?: string): string => {
+    if (!fechaRaw) return 'Reciente';
+    try {
+      const datePart = typeof fechaRaw === 'string'
+        ? (fechaRaw.includes('T') ? fechaRaw.split('T')[0] : fechaRaw.split(' ')[0])
+        : '';
+      return datePart ? formatDateReadable(datePart) : 'Reciente';
+    } catch {
+      return 'Reciente';
+    }
+  };
+
+  // Filter client's reservations con soporte para snake_case y camelCase (API REST)
+  const userEmail = (currentUser?.correo || '').trim().toLowerCase();
+  const clientReservations = reservas.filter((r) => {
+    if (!userEmail) return false;
+    const resEmail = (r.cliente_correo || (r as any).clienteCorreo || '').trim().toLowerCase();
+    return resEmail === userEmail;
+  });
 
   const filtered = clientReservations.filter((r) => {
     if (activeTab === 'TODAS') return true;
@@ -112,12 +128,16 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
     }
   };
 
-  // Check 48 hour status
+  // Check 48 hour status (con manejo seguro de fechas)
   const checkCanCancel = (reserva: Reserva) => {
     if (reserva.estado !== 'PENDIENTE' && reserva.estado !== 'CONFIRMADA') {
       return { canCancel: false, reason: 'Solo se pueden cancelar reservas en estado Pendiente o Confirmada.' };
     }
-    const entradaDate = new Date(`${reserva.fecha_entrada}T15:00:00`);
+    const fechaLimpia = (reserva.fecha_entrada || (reserva as any).fechaEntrada || '').split('T')[0];
+    if (!fechaLimpia) {
+      return { canCancel: false, reason: 'Fecha de entrada no especificada en el expediente.' };
+    }
+    const entradaDate = new Date(`${fechaLimpia}T15:00:00`);
     const now = new Date();
     const diffHours = (entradaDate.getTime() - now.getTime()) / (1000 * 3600);
 
@@ -242,12 +262,12 @@ export const MyReservationsView: React.FC<MyReservationsViewProps> = ({ onExplor
                         {statusConfig.label}
                       </span>
                       <span className="text-xs text-stone-400">
-                        Creada el {formatDateReadable(reserva.fecha_creacion.split('T')[0])}
+                        Creada el {getDisplayCreationDate(reserva.fecha_creacion || (reserva as any).fechaCreacion)}
                       </span>
                     </div>
 
                     <h3 className="text-lg font-bold text-stone-900">
-                      Habitación {reserva.habitacion_numero} · {reserva.habitacion_tipo}
+                      Habitación {reserva.habitacion_numero || (reserva as any).habitacionNumero || 'Suite'} · {reserva.habitacion_tipo || (reserva as any).habitacionTipo || 'Estándar'}
                     </h3>
                   </div>
 

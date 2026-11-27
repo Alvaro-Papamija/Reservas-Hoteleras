@@ -259,8 +259,34 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Current client helper
-  const currentCliente = clientes.find((c) => c.correo === currentUser.correo) || null;
+  // Current client helper (búsqueda insensible a mayúsculas/minúsculas)
+  const currentCliente = clientes.find(
+    (c) => (c.correo || '').trim().toLowerCase() === (currentUser?.correo || '').trim().toLowerCase()
+  ) || null;
+
+  // Sincronización automática de perfil de cliente si un usuario CLIENTE no tiene ficha en clientes
+  useEffect(() => {
+    if (isAuthenticated && currentUser && currentRole === 'CLIENTE') {
+      const emailLower = (currentUser.correo || '').trim().toLowerCase();
+      if (!emailLower) return;
+      const exists = clientes.some((c) => (c.correo || '').trim().toLowerCase() === emailLower);
+      if (!exists) {
+        const parts = (currentUser.nombre || 'Huésped').trim().split(' ');
+        const nuevoCliente: Cliente = {
+          id_cliente: Math.max(0, ...clientes.map((c) => c.id_cliente)) + 1,
+          id_usuario: currentUser.id_usuario,
+          nombre: parts[0] || currentUser.nombre,
+          apellido: parts.slice(1).join(' ') || 'Huésped',
+          documento: `${Math.floor(10000000 + Math.random() * 90000000)}`,
+          telefono: '+57 300 000 0000',
+          direccion: 'Colombia',
+          correo: currentUser.correo,
+          fecha_registro: new Date().toISOString(),
+        };
+        setClientes((prev) => [...prev, nuevoCliente]);
+      }
+    }
+  }, [isAuthenticated, currentUser, currentRole, clientes]);
 
   // Role switching
   const switchRole = (role: RolUsuario) => {
@@ -474,8 +500,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const target = reservas.find((r) => r.id_reserva === idReserva);
     if (!target) return { success: false, error: 'Reserva no encontrada.' };
 
-    // RBAC: Client can only rate their own reservations
-    if (currentRole === 'CLIENTE' && target.cliente_correo.toLowerCase() !== currentUser.correo.toLowerCase()) {
+    // RBAC: Client can only rate their own reservations (soporte para snake_case y camelCase)
+    const targetEmail = (target.cliente_correo || (target as any).clienteCorreo || '').trim().toLowerCase();
+    const currentEmail = (currentUser?.correo || '').trim().toLowerCase();
+    if (currentRole === 'CLIENTE' && targetEmail !== currentEmail) {
       return { success: false, error: 'Acceso denegado: solo puedes calificar estancias asociadas a tu cuenta.' };
     }
 

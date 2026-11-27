@@ -44,6 +44,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
         requiredRole={allowedRoles.join(' o ')}
         currentRole={currentRole}
         currentUserNombre={currentUser?.nombre || 'Invitado no autenticado'}
+        isUnauthenticated={true}
         onGoHome={() => setActiveView('inicio')}
         onOpenAuth={onOpenAuth}
       />
@@ -60,6 +61,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
         requiredRole={allowedRoles.join(' o ')}
         currentRole={currentRole}
         currentUserNombre={currentUser?.nombre}
+        isUnauthenticated={false}
         onGoHome={() => setActiveView('inicio')}
         onOpenAuth={onOpenAuth}
       />

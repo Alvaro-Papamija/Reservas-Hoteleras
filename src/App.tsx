@@ -13,6 +13,7 @@ import { ChatbotConcierge } from './components/ChatbotConcierge';
 import { Footer } from './components/Footer';
 import { RoleGuard } from './components/common/RoleGuard';
 import { ViewSkeleton } from './components/common/ViewSkeleton';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Code Splitting: Lazy-loaded secondary & administrative views
 const MyReservationsView = lazy(() =>
@@ -278,9 +279,11 @@ const MainApp: React.FC = () => {
             requireAuth={true}
             onOpenAuth={() => setIsAuthModalOpen(true)}
           >
-            <Suspense fallback={<ViewSkeleton />}>
-              <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
-            </Suspense>
+            <ErrorBoundary fallbackTitle="Inconveniente al cargar Mis Reservas">
+              <Suspense fallback={<ViewSkeleton />}>
+                <MyReservationsView onExploreRooms={() => setActiveView('habitaciones')} />
+              </Suspense>
+            </ErrorBoundary>
           </RoleGuard>
         )}
 
